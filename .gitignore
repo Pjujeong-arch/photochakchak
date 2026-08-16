@@ -5,6 +5,8 @@ venv/
 .env
 *.lic
 _premium_test/
+_testdata/
+_testdata2/
 Thumbs.db
 desktop.ini
 .DS_Store
