@@ -962,15 +962,37 @@ a {
   transition: left 0.28s linear;
 }
 
+.pome__halo {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 96px;
+  height: 78px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at 50% 70%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 248, 243, 0) 74%);
+  z-index: 0;
+}
+
 .pome__shot {
+  position: absolute;
+  left: 0;
+  bottom: 0;
   display: block;
   width: 118px;
   height: 118px;
   object-fit: contain;
   object-position: center bottom;
   background: transparent;
-  filter: drop-shadow(0 8px 10px rgba(90, 48, 28, 0.22));
+  opacity: 0;
+  z-index: 1;
+  filter:
+    drop-shadow(0 0 1px rgba(90, 48, 28, 0.35))
+    drop-shadow(0 8px 10px rgba(90, 48, 28, 0.28));
   transform-origin: 50% 90%;
+}
+
+.pome__shot.is-on {
+  opacity: 1;
 }
 
 .pome__say {
