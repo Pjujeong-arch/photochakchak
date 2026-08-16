@@ -504,10 +504,82 @@ a {
   border-color: var(--pick-line);
   color: var(--accent-dark);
   min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  height: auto;
+  min-height: 64px;
+  padding: 10px 14px;
+  white-space: normal;
+  text-align: left;
 }
 
 .btn--pick:hover:not(:disabled) {
   background: #ffdccb;
+}
+
+.btn--pick.is-picked {
+  background: #fff;
+  border-color: #c9dfd4;
+  box-shadow: 0 8px 18px rgba(79, 125, 104, 0.1);
+}
+
+.btn--pick.is-picked:hover:not(:disabled) {
+  background: #fffaf6;
+}
+
+.pick__icon {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #ffe8dc;
+  color: var(--accent-dark);
+}
+
+.pick__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.pick__icon--dest {
+  background: #e8f3ee;
+  color: var(--olive);
+}
+
+.btn--pick.is-picked .pick__icon {
+  background: #e7f4ee;
+  color: var(--olive);
+}
+
+.pick__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pick__name {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pick__meta {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn--zip {
@@ -776,7 +848,7 @@ a {
 @media (min-width: 760px) {
   .folder-picks {
     grid-template-columns: 1fr 1fr;
-    align-items: end;
+    align-items: stretch;
   }
 }
 
@@ -860,9 +932,10 @@ a {
   position: relative;
 }
 
+
 .pome-runway {
   position: relative;
-  height: 96px;
+  height: 118px;
   margin: 0 0 4px;
   overflow: visible;
 }
@@ -871,7 +944,7 @@ a {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 10px;
+  bottom: 14px;
   height: 10px;
   border-radius: 999px;
   background: linear-gradient(90deg, rgba(63, 143, 122, 0.08), rgba(224, 107, 79, 0.12), rgba(63, 143, 122, 0.08));
@@ -882,25 +955,28 @@ a {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 108px;
-  height: 96px;
+  width: 118px;
+  height: 118px;
   z-index: 2;
   pointer-events: none;
-  transition: left 0.22s linear;
+  transition: left 0.28s linear;
 }
 
-.pome__svg {
+.pome__shot {
   display: block;
-  width: 108px;
-  height: 96px;
-  overflow: visible;
-  filter: drop-shadow(0 8px 10px rgba(90, 48, 28, 0.12));
+  width: 118px;
+  height: 118px;
+  object-fit: contain;
+  object-position: center bottom;
+  background: transparent;
+  filter: drop-shadow(0 8px 10px rgba(90, 48, 28, 0.22));
+  transform-origin: 50% 90%;
 }
 
 .pome__say {
   position: absolute;
-  left: 58%;
-  top: 2px;
+  left: 50%;
+  top: 0;
   transform: translateX(-50%);
   padding: 3px 8px;
   border-radius: 999px;
@@ -912,6 +988,7 @@ a {
   font-weight: 700;
   white-space: nowrap;
   opacity: 0;
+  z-index: 3;
   box-shadow: 0 4px 10px rgba(90, 48, 28, 0.08);
 }
 
@@ -925,12 +1002,13 @@ a {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 2;
 }
 
 .pome__hearts i {
   position: absolute;
   left: 68%;
-  bottom: 58px;
+  bottom: 78px;
   width: 8px;
   height: 8px;
   background: #f08a9a;
@@ -957,13 +1035,14 @@ a {
 }
 
 .pome[data-act="cute"] .pome__hearts i,
+.pome[data-act="highfive"] .pome__hearts i,
 .pome.is-done .pome__hearts i {
   animation: pome-heart 1.1s ease-out infinite;
 }
 
 .pome[data-act="cute"] .pome__hearts i:nth-child(2),
 .pome.is-done .pome__hearts i:nth-child(2) {
-  left: 52%;
+  left: 48%;
   animation-delay: 0.2s;
   background: #e06b4f;
 }
@@ -975,250 +1054,94 @@ a {
   background: #f3b4be;
 }
 
-.pome-actor,
-.pome-head,
-.pome-tail,
-.pome-ear,
-.pome-eye,
-.pome-leg,
-.pome-shadow,
-.pome-tongue,
-.pome-bowl,
-.pome-puffs {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.pome-tail {
-  transform-origin: 80% 60%;
-  animation: pome-tail 0.7s ease-in-out infinite;
-}
-
-.pome-eye {
-  transform-origin: center;
-  animation: pome-blink 3.4s ease-in-out infinite;
-}
-
-.pome-eye--r {
-  animation-delay: 0.08s;
-}
-
-.pome-tongue {
-  opacity: 0;
-  transform-origin: 50% 0%;
-}
-
-.pome-bowl {
-  opacity: 0;
-  transform-origin: 50% 80%;
-}
-
-.pome-puffs {
-  opacity: 0;
-}
-
-.pome-puffs circle:first-child {
-  transform: translate(10px, 72px);
-}
-
-.pome-puffs circle:last-child {
-  transform: translate(4px, 68px);
-}
-
-.pome[data-act="idle"] .pome-actor {
+.pome[data-act="idle"] .pome__shot {
   animation: pome-idle 2.4s ease-in-out infinite;
 }
 
-.pome[data-act="idle"] .pome-ear--l,
-.pome[data-act="idle"] .pome-ear--r {
-  animation: pome-ear-idle 2.4s ease-in-out infinite;
+.pome[data-act="run"] .pome__shot {
+  animation: pome-run 0.34s ease-in-out infinite;
 }
 
-.pome[data-act="run"] .pome-actor {
-  animation: pome-run 0.32s ease-in-out infinite;
-}
-
-.pome[data-act="run"] .pome-leg--fl,
-.pome[data-act="run"] .pome-leg--br {
-  transform-origin: 50% 0%;
-  animation: pome-leg-a 0.32s ease-in-out infinite;
-}
-
-.pome[data-act="run"] .pome-leg--fr,
-.pome[data-act="run"] .pome-leg--bl {
-  transform-origin: 50% 0%;
-  animation: pome-leg-b 0.32s ease-in-out infinite;
-}
-
-.pome[data-act="run"] .pome-tail {
-  animation-duration: 0.2s;
-}
-
-.pome[data-act="run"] .pome-puffs {
-  animation: pome-puff 0.42s ease-out infinite;
-}
-
-.pome[data-act="run"] .pome-shadow {
-  animation: pome-shadow-run 0.32s ease-in-out infinite;
-}
-
-.pome[data-act="trick"] .pome-actor {
-  transform-origin: 50% 58%;
-  animation: pome-trick 1.35s cubic-bezier(0.45, 0.05, 0.55, 0.95);
-}
-
-.pome[data-act="trick"] .pome-ear--l {
-  animation: pome-ear-flop 1.35s ease-in-out;
-}
-
-.pome[data-act="drink"] .pome-head {
-  transform-origin: 40% 70%;
-  animation: pome-drink-head 0.55s ease-in-out infinite;
-}
-
-.pome[data-act="drink"] .pome-tongue {
-  opacity: 1;
-  animation: pome-lap 0.28s ease-in-out infinite;
-}
-
-.pome[data-act="drink"] .pome-bowl {
-  opacity: 1;
-}
-
-.pome[data-act="cute"] .pome-actor,
-.pome.is-done .pome-actor {
+.pome[data-act="cute"] .pome__shot,
+.pome.is-done .pome__shot {
   animation: pome-cute 0.9s ease-in-out infinite;
 }
 
-.pome[data-act="cute"] .pome-tongue,
-.pome.is-done .pome-tongue {
-  opacity: 1;
-  animation: pome-lap 0.7s ease-in-out infinite;
+.pome[data-act="drink"] .pome__shot,
+.pome[data-act="eat"] .pome__shot {
+  animation: pome-nibble 0.55s ease-in-out infinite;
 }
 
-.pome[data-act="cute"] .pome-ear--r,
-.pome.is-done .pome-ear--r {
-  animation: pome-ear-wiggle 0.9s ease-in-out infinite;
+.pome[data-act="lie"] .pome__shot {
+  animation: pome-idle 3s ease-in-out infinite;
 }
 
-.pome[data-act="jump"] .pome-actor {
+.pome[data-act="sleep"] .pome__shot {
+  animation: pome-sleep 2.8s ease-in-out infinite;
+}
+
+.pome[data-act="bark"] .pome__shot {
+  animation: pome-bark 0.38s ease-in-out infinite;
+}
+
+.pome[data-act="highfive"] .pome__shot {
+  animation: pome-highfive 0.7s ease-in-out infinite;
+}
+
+.pome[data-act="playdead"] .pome__shot {
+  animation: pome-playdead 1.6s ease-in-out infinite;
+}
+
+.pome[data-act="jump"] .pome__shot {
   animation: pome-jump 0.85s cubic-bezier(0.2, 0.8, 0.25, 1) infinite;
-}
-
-.pome[data-act="jump"] .pome-shadow {
-  animation: pome-shadow-jump 0.85s ease-in-out infinite;
-}
-
-.pome[data-act="jump"] .pome-ear--l,
-.pome[data-act="jump"] .pome-ear--r {
-  animation: pome-ear-jump 0.85s ease-in-out infinite;
-}
-
-.pome[data-act="roll"] .pome-actor {
-  transform-origin: 50% 58%;
-  animation: pome-roll 1.1s ease-in-out infinite;
 }
 
 @keyframes pome-idle {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2.5px); }
-}
-
-@keyframes pome-ear-idle {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-6deg); }
+  50% { transform: translateY(-3px); }
 }
 
 @keyframes pome-run {
-  0%, 100% { transform: translateY(0) rotate(-5deg); }
-  50% { transform: translateY(-6px) rotate(4deg); }
-}
-
-@keyframes pome-leg-a {
-  0%, 100% { transform: rotate(-22deg); }
-  50% { transform: rotate(26deg); }
-}
-
-@keyframes pome-leg-b {
-  0%, 100% { transform: rotate(24deg); }
-  50% { transform: rotate(-22deg); }
-}
-
-@keyframes pome-puff {
-  0% { opacity: 0.85; transform: translate(0, 0) scale(0.5); }
-  100% { opacity: 0; transform: translate(-14px, -4px) scale(1.5); }
-}
-
-@keyframes pome-shadow-run {
-  0%, 100% { transform: scaleX(1); opacity: 0.9; }
-  50% { transform: scaleX(0.78); opacity: 0.5; }
-}
-
-@keyframes pome-trick {
-  0% { transform: translateY(0) rotate(0) scale(1); }
-  28% { transform: translateY(-22px) rotate(160deg) scale(1.06); }
-  62% { transform: translateY(-6px) rotate(300deg) scale(1); }
-  100% { transform: translateY(0) rotate(360deg) scale(1); }
-}
-
-@keyframes pome-ear-flop {
-  0%, 100% { transform: rotate(0deg); }
-  40% { transform: rotate(-38deg); }
-}
-
-@keyframes pome-drink-head {
-  0%, 100% { transform: rotate(22deg) translate(2px, 4px); }
-  50% { transform: rotate(28deg) translate(2px, 6px); }
-}
-
-@keyframes pome-lap {
-  0%, 100% { transform: scaleY(0.7); }
-  50% { transform: scaleY(1.15); }
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-8px) rotate(5deg); }
 }
 
 @keyframes pome-cute {
-  0%, 100% { transform: translateY(0) rotate(-7deg) scale(1, 1); }
-  40% { transform: translateY(3px) rotate(9deg) scale(1.08, 0.88); }
-  70% { transform: translateY(-5px) rotate(-3deg) scale(0.97, 1.06); }
+  0%, 100% { transform: translateY(0) rotate(-5deg) scale(1); }
+  40% { transform: translateY(2px) rotate(7deg) scale(1.05); }
+  70% { transform: translateY(-6px) rotate(-3deg) scale(1); }
 }
 
-@keyframes pome-ear-wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(18deg); }
+@keyframes pome-nibble {
+  0%, 100% { transform: translate(0, 2px) rotate(6deg); }
+  50% { transform: translate(1px, 5px) rotate(10deg); }
+}
+
+@keyframes pome-sleep {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.03, 0.96); }
+}
+
+@keyframes pome-bark {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.08) translateY(-4px); }
+}
+
+@keyframes pome-highfive {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50% { transform: translateY(-10px) rotate(8deg); }
+}
+
+@keyframes pome-playdead {
+  0%, 100% { transform: rotate(-12deg) translateY(4px); }
+  50% { transform: rotate(8deg) translateY(2px); }
 }
 
 @keyframes pome-jump {
   0%, 100% { transform: translateY(0) scale(1, 1); }
-  16% { transform: translateY(3px) scale(1.1, 0.82); }
-  46% { transform: translateY(-28px) rotate(-8deg) scale(0.94, 1.1); }
-  72% { transform: translateY(-6px) rotate(3deg) scale(1, 1); }
-}
-
-@keyframes pome-shadow-jump {
-  0%, 100% { transform: scaleX(1); opacity: 0.85; }
-  16% { transform: scaleX(1.15); opacity: 1; }
-  46% { transform: scaleX(0.55); opacity: 0.28; }
-}
-
-@keyframes pome-ear-jump {
-  0%, 16%, 100% { transform: rotate(0deg); }
-  46% { transform: rotate(-24deg); }
-}
-
-@keyframes pome-roll {
-  0% { transform: translateY(0) rotate(0); }
-  40% { transform: translateY(-12px) rotate(210deg); }
-  100% { transform: translateY(0) rotate(360deg); }
-}
-
-@keyframes pome-tail {
-  0%, 100% { transform: rotate(-14deg); }
-  50% { transform: rotate(26deg); }
-}
-
-@keyframes pome-blink {
-  0%, 88%, 96%, 100% { transform: scaleY(1); }
-  92% { transform: scaleY(0.08); }
+  16% { transform: translateY(4px) scale(1.08, 0.86); }
+  46% { transform: translateY(-28px) rotate(-6deg) scale(0.96, 1.08); }
+  72% { transform: translateY(-6px) scale(1); }
 }
 
 @keyframes pome-heart {
@@ -1234,24 +1157,11 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   .pome,
-  .pome-actor,
-  .pome-head,
-  .pome-tail,
-  .pome-ear,
-  .pome-eye,
-  .pome-leg,
-  .pome-shadow,
-  .pome-tongue,
+  .pome__shot,
   .pome__say,
-  .pome__hearts i,
-  .pome-puffs {
+  .pome__hearts i {
     animation: none !important;
     transition: none !important;
-  }
-
-  .pome-tongue,
-  .pome-bowl {
-    opacity: 0;
   }
 }
 

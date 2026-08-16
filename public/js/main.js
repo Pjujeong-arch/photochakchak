@@ -16,7 +16,11 @@ const els = {
   toast: $(".toast"),
   sourceBtn: $("[data-pick-source]"),
   sourceInput: $("#source-input"),
+  sourceName: $("[data-source-name]"),
+  sourceMeta: $("[data-source-meta]"),
   destBtn: $("[data-pick-dest]"),
+  destName: $("[data-dest-name]"),
+  destMeta: $("[data-dest-meta]"),
   fallback: $("#opt-fallback"),
   skipDup: $("#opt-dup"),
   previewBtn: $("[data-preview]"),
@@ -27,6 +31,7 @@ const els = {
   progress: $("#progress"),
   pome: $("[data-pome]"),
   pomeSay: $("[data-pome-say]"),
+  pomeShot: $("[data-pome-shot]"),
   status: $("[data-status]"),
   log: $("#log"),
   modal: $("[data-modal]"),
@@ -107,15 +112,27 @@ function escapeHtml(value) {
 
 const POME_ACTS = [
   { id: "run", say: "폴짝폴짝 멍!" },
-  { id: "trick", say: "재주부린다개" },
-  { id: "drink", say: "꿀꺽꿀꺽 왈" },
   { id: "cute", say: "재롱이야 ♡" },
+  { id: "drink", say: "꿀꺽꿀꺽 왈" },
+  { id: "lie", say: "눕는다개…" },
+  { id: "sleep", say: "쿨쿨… 멍" },
+  { id: "eat", say: "밥이다왈!" },
+  { id: "bark", say: "멍멍멍!!" },
+  { id: "highfive", say: "하이파이브!" },
+  { id: "playdead", say: "죽는 시늉… 왈" },
   { id: "jump", say: "점프점프!" },
-  { id: "roll", say: "데굴데굴" },
 ];
 
 let pomeActTimer = 0;
 let pomeActIndex = 0;
+let etaRate = null;
+
+function preloadPomeShots() {
+  POME_ACTS.concat([{ id: "idle" }]).forEach((act) => {
+    const img = new Image();
+    img.src = `img/runway/pome-act-${act.id}.png`;
+  });
+}
 
 function setProgressPct(pct) {
   const value = Math.max(0, Math.min(100, Number(pct) || 0));
@@ -137,6 +154,7 @@ function setPomeAct(id, say) {
   if (!pome) return;
   pome.dataset.act = id;
   if (els.pomeSay && say) els.pomeSay.textContent = say;
+  if (els.pomeShot) els.pomeShot.src = `img/runway/pome-act-${id}.png`;
 }
 
 function startPomeShow() {
@@ -151,7 +169,7 @@ function startPomeShow() {
     pomeActIndex = (pomeActIndex + 1) % POME_ACTS.length;
     const act = POME_ACTS[pomeActIndex];
     setPomeAct(act.id, act.say);
-  }, 1400);
+  }, 1600);
 }
 
 function stopPomeShow(resetting) {
@@ -175,6 +193,7 @@ function setBusy(busy) {
   if (els.destBtn) els.destBtn.disabled = busy || !canPickDir();
   if (els.cancelBtn) els.cancelBtn.disabled = !busy;
   if (busy) {
+    etaRate = null;
     setProgressPct(0);
     startPomeShow();
   } else {
@@ -207,12 +226,50 @@ function collectImages(fileList) {
   return Array.from(fileList).filter(isImageFile);
 }
 
+function folderNameFromFiles(files) {
+  const file = files && files[0];
+  if (!file) return "";
+  const rel = String(file.webkitRelativePath || "").replace(/\\/g, "/");
+  if (rel.includes("/")) return rel.split("/").filter(Boolean)[0] || "";
+  return "선택한 폴더";
+}
+
+function paintPick(btn, nameEl, metaEl, picked, name, meta) {
+  if (nameEl) nameEl.textContent = name;
+  if (metaEl) metaEl.textContent = meta;
+  if (btn) {
+    btn.classList.toggle("is-picked", Boolean(picked));
+    btn.title = picked ? name : "";
+  }
+}
+
 function bindSource() {
   els.sourceBtn.addEventListener("click", () => els.sourceInput.click());
   els.sourceInput.addEventListener("change", () => {
     state.files = collectImages(els.sourceInput.files || []);
     state.preview = null;
-    showToast(state.files.length ? `${state.files.length}개 파일을 담았습니다.` : "파일이 없습니다.");
+    const folder = folderNameFromFiles(state.files);
+    if (state.files.length && folder) {
+      paintPick(
+        els.sourceBtn,
+        els.sourceName,
+        els.sourceMeta,
+        true,
+        folder,
+        `${state.files.length.toLocaleString()}개 담김 · 다시 고르려면 누르기`
+      );
+      showToast(`${folder}에서 ${state.files.length}개 파일을 담았습니다.`);
+    } else {
+      paintPick(
+        els.sourceBtn,
+        els.sourceName,
+        els.sourceMeta,
+        false,
+        "폴더 선택",
+        "정리할 사진·영상·기타를 담아요"
+      );
+      showToast("파일이 없습니다.");
+    }
   });
 }
 
@@ -223,6 +280,7 @@ function canPickDir() {
 function bindDest() {
   if (!canPickDir()) {
     els.destBtn.disabled = true;
+    paintPick(els.destBtn, els.destName, els.destMeta, false, "폴더 저장 불가", "이 브라우저는 ZIP으로 받으세요");
     showToast("이 브라우저는 폴더 저장 미지원 · ZIP으로 받으세요");
     return;
   }
@@ -230,7 +288,16 @@ function bindDest() {
     try {
       state.destHandle = await window.showDirectoryPicker({ mode: "readwrite" });
       state.preview = null;
-      showToast(`${state.destHandle.name} 폴더에 저장합니다.`);
+      const name = state.destHandle.name || "저장 폴더";
+      paintPick(
+        els.destBtn,
+        els.destName,
+        els.destMeta,
+        true,
+        name,
+        "여기에 연월·미분류·기타파일로 복사 · 다시 고르려면 누르기"
+      );
+      showToast(`${name} 폴더에 저장합니다.`);
     } catch (_err) {
       /* user cancelled */
     }
@@ -281,10 +348,12 @@ async function runPreview() {
   clearLog();
   logLine("— 미리보기 시작: 분류 예정 경로·중복·필요 용량을 계산합니다 —");
   setBusy(true);
+  const startedAt = performance.now();
+  els.status.textContent = "분석 시작 · 남은 시간 계산 중…";
   try {
     const result = await analyzeFiles(state.files, options(), (done, total) => {
       setProgressPct(total ? (done / total) * 100 : 0);
-      els.status.textContent = `분석 중 ${Math.round(els.progress.value)}% (${done.toLocaleString()}/${total.toLocaleString()})`;
+      els.status.textContent = progressLabel(done, total, startedAt, "분석 중");
     });
     renderPreview(result);
   } catch (err) {
@@ -326,14 +395,19 @@ function formatRemain(ms) {
   return restMin ? `약 ${hours}시간 ${restMin}분 남음` : `약 ${hours}시간 남음`;
 }
 
-function progressLabel(done, total, startedAt) {
+function progressLabel(done, total, startedAt, verb) {
   const pct = total ? Math.round((done / total) * 100) : 0;
-  const counts = `${pct}% (${done.toLocaleString()}/${total.toLocaleString()})`;
+  const head = verb ? `${verb} ` : "";
+  const counts = `${head}${pct}% (${done.toLocaleString()}/${total.toLocaleString()})`;
   if (!done || done >= total) return counts;
   const elapsed = performance.now() - startedAt;
-  if (done < 2 || elapsed < 500) return `${counts} · 남은 시간 계산 중…`;
-  const remain = (elapsed / done) * (total - done);
-  return `${counts} · ${formatRemain(remain)}`;
+  if (elapsed < 350) return `${counts} · 남은 시간 계산 중…`;
+  const inst = done / elapsed;
+  etaRate = etaRate == null ? inst : etaRate * 0.72 + inst * 0.28;
+  const remain = (total - done) / Math.max(etaRate, 1e-9);
+  const perSec = etaRate * 1000;
+  const speed = total >= 200 && perSec >= 0.5 ? ` · 초당 ${perSec.toFixed(perSec >= 10 ? 0 : 1)}개` : "";
+  return `${counts} · ${formatRemain(remain)}${speed}`;
 }
 
 function doneSummary(stats) {
@@ -395,10 +469,12 @@ async function runZip() {
   clearLog();
   logLine("원본은 유지합니다. 정리본을 ZIP으로 받습니다.");
   setBusy(true);
+  const startedAt = performance.now();
+  els.status.textContent = "ZIP 시작 · 남은 시간 계산 중…";
   try {
     const { stats, blob, skipped } = await copyToZip(state.files, options(), (done, total) => {
       setProgressPct(total ? (done / total) * 100 : 0);
-      els.status.textContent = `${Math.round(els.progress.value)}% (${done.toLocaleString()}/${total.toLocaleString()})`;
+      els.status.textContent = progressLabel(done, total, startedAt);
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -485,6 +561,7 @@ bindSource();
 bindDest();
 bindApp();
 bindDogCaptions();
+preloadPomeShots();
 setBusy(false);
 placePome(Number(els.progress.value) || 0);
 window.addEventListener("resize", () => placePome(Number(els.progress.value) || 0));

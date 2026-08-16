@@ -55,7 +55,18 @@
           <div class="field">
             <span class="field__label">[1] 정리할 폴더 (사진·영상·기타)</span>
             <div class="field__row">
-              <button class="btn btn--pick" type="button" data-pick-source>폴더 선택</button>
+              <button class="btn btn--pick" type="button" data-pick-source>
+                <span class="pick__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M3.5 8.5V7a2 2 0 0 1 2-2h4.2l1.6 1.8H18.5A2 2 0 0 1 20.5 9v8.2a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V8.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                    <path d="M3.5 10.5h17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span class="pick__copy">
+                  <strong class="pick__name" data-source-name>폴더 선택</strong>
+                  <span class="pick__meta" data-source-meta>정리할 사진·영상·기타를 담아요</span>
+                </span>
+              </button>
               <input id="source-input" type="file" webkitdirectory multiple hidden />
             </div>
           </div>
@@ -63,7 +74,18 @@
           <div class="field">
             <span class="field__label">[2] 정리본 저장 폴더 (원본과 다른 위치, 연도월·미분류·기타파일)</span>
             <div class="field__row">
-              <button class="btn btn--pick" type="button" data-pick-dest>폴더 선택</button>
+              <button class="btn btn--pick" type="button" data-pick-dest>
+                <span class="pick__icon pick__icon--dest" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M3.5 8.5V7a2 2 0 0 1 2-2h4.2l1.6 1.8H18.5A2 2 0 0 1 20.5 9v8.2a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V8.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                    <path d="M12 11.2v6.2M9.4 15l2.6 2.4L14.6 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="pick__copy">
+                  <strong class="pick__name" data-dest-name>폴더 선택</strong>
+                  <span class="pick__meta" data-dest-meta>원본과 다른 위치에 복사해요</span>
+                </span>
+              </button>
             </div>
           </div>
           </div>
@@ -93,74 +115,7 @@
               <div class="pome" data-pome data-act="idle">
                 <span class="pome__say" data-pome-say>멍!</span>
                 <span class="pome__hearts"><i></i><i></i><i></i></span>
-                <svg class="pome__svg" viewBox="0 0 100 92" fill="none">
-                  <defs>
-                    <radialGradient id="pomeFur" cx="38%" cy="32%" r="70%">
-                      <stop offset="0%" stop-color="#fff3dc" />
-                      <stop offset="42%" stop-color="#f0c98a" />
-                      <stop offset="100%" stop-color="#d4924a" />
-                    </radialGradient>
-                    <radialGradient id="pomeFurDark" cx="40%" cy="30%" r="70%">
-                      <stop offset="0%" stop-color="#efc07a" />
-                      <stop offset="100%" stop-color="#c47d36" />
-                    </radialGradient>
-                    <radialGradient id="pomeMuzzle" cx="40%" cy="30%" r="70%">
-                      <stop offset="0%" stop-color="#fff8ee" />
-                      <stop offset="100%" stop-color="#f0d2b0" />
-                    </radialGradient>
-                  </defs>
-                  <ellipse class="pome-shadow" cx="52" cy="86" rx="20" ry="3.4" fill="rgba(90,48,28,.16)" />
-                  <g class="pome-actor">
-                    <g class="pome-tail">
-                      <ellipse cx="18" cy="50" rx="11" ry="8" fill="url(#pomeFurDark)" transform="rotate(-28 18 50)" />
-                      <ellipse cx="12" cy="44" rx="7" ry="6" fill="#f3d09a" transform="rotate(-18 12 44)" />
-                      <ellipse cx="8" cy="49" rx="5.5" ry="4.5" fill="#e8b86a" />
-                    </g>
-                    <g class="pome-leg pome-leg--bl"><rect x="34" y="70" width="7" height="12" rx="3.5" fill="#c9843f" /></g>
-                    <g class="pome-leg pome-leg--br"><rect x="44" y="70" width="7" height="12" rx="3.5" fill="#b87432" /></g>
-                    <ellipse class="pome-body" cx="46" cy="58" rx="22" ry="16" fill="url(#pomeFur)" />
-                    <ellipse cx="36" cy="56" rx="12" ry="12" fill="url(#pomeFurDark)" />
-                    <ellipse cx="58" cy="56" rx="13" ry="12" fill="#f6d7a8" />
-                    <circle cx="28" cy="52" r="6" fill="#efc07a" />
-                    <circle cx="62" cy="48" r="5.5" fill="#fff1d4" />
-                    <g class="pome-leg pome-leg--fl"><rect x="54" y="70" width="7" height="12" rx="3.5" fill="#d4924a" /></g>
-                    <g class="pome-leg pome-leg--fr"><rect x="64" y="70" width="7" height="12" rx="3.5" fill="#c9843f" /></g>
-                    <g class="pome-head">
-                      <g class="pome-ear pome-ear--l">
-                        <ellipse cx="58" cy="20" rx="7" ry="11" fill="#e8a85c" transform="rotate(-22 58 20)" />
-                        <ellipse cx="58.5" cy="22" rx="3.2" ry="6" fill="#f2b8a0" transform="rotate(-22 58.5 22)" />
-                      </g>
-                      <g class="pome-ear pome-ear--r">
-                        <ellipse cx="82" cy="20" rx="7" ry="11" fill="#e0a050" transform="rotate(26 82 20)" />
-                        <ellipse cx="81.5" cy="22" rx="3.2" ry="6" fill="#f2b8a0" transform="rotate(26 81.5 22)" />
-                      </g>
-                      <circle cx="70" cy="36" r="16.5" fill="url(#pomeFur)" />
-                      <circle cx="58" cy="32" r="6" fill="#f3c98a" />
-                      <circle cx="82" cy="30" r="5.5" fill="#fff1d4" />
-                      <circle cx="70" cy="22" r="5" fill="#f7dcb0" />
-                      <ellipse cx="76" cy="44" rx="9" ry="7" fill="url(#pomeMuzzle)" />
-                      <g class="pome-eye pome-eye--l">
-                        <ellipse cx="65" cy="34.5" rx="3.1" ry="3.6" fill="#2a221e" />
-                        <circle cx="66.1" cy="33.4" r="1.05" fill="#fff" />
-                      </g>
-                      <g class="pome-eye pome-eye--r">
-                        <ellipse cx="77.5" cy="34" rx="3.1" ry="3.6" fill="#2a221e" />
-                        <circle cx="78.6" cy="32.9" r="1.05" fill="#fff" />
-                      </g>
-                      <ellipse cx="82" cy="44" rx="2.4" ry="1.9" fill="#3a2a24" />
-                      <path d="M78 47.2c1.6 1.6 4.2 1.6 5.6 0" stroke="#3a2a24" stroke-width="1.15" stroke-linecap="round" />
-                      <ellipse class="pome-tongue" cx="81.2" cy="50.5" rx="2.4" ry="3.1" fill="#e8899a" />
-                    </g>
-                    <g class="pome-puffs">
-                      <circle r="3.2" fill="rgba(255,248,243,.85)" />
-                      <circle r="2.2" fill="rgba(255,248,243,.7)" />
-                    </g>
-                  </g>
-                  <g class="pome-bowl">
-                    <path d="M6 78h16l-1.6 6.2a6 6 0 0 1-5.9 4.6h-1a6 6 0 0 1-5.9-4.6L6 78z" fill="#7eb7c9" stroke="#5a8fa0" stroke-width="1.2" />
-                    <ellipse cx="14" cy="78.4" rx="7.2" ry="2.1" fill="#bfe8f4" />
-                  </g>
-                </svg>
+                <img class="pome__shot" data-pome-shot src="img/runway/pome-act-idle.png" alt="" />
               </div>
             </div>
             <progress id="progress" max="100" value="0"></progress>

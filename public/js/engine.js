@@ -343,7 +343,7 @@ async function analyzeFiles(files, options, onProgress) {
       }
     }
 
-    if (i % 8 === 0 || i === files.length - 1) {
+    if (i === 0 || i % 3 === 0 || i === files.length - 1) {
       onProgress(i + 1, files.length);
       await yieldUi();
     }
