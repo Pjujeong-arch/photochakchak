@@ -4,6 +4,8 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.*
+!.env.example
 *.lic
 _premium_test/
 _testdata/
@@ -12,3 +14,5 @@ Thumbs.db
 desktop.ini
 .DS_Store
 .photochak_last_run.json
+dist/
+

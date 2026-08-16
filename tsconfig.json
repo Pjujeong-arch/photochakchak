@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "types": []
+  },
+  "include": [
+    "src/app/**/*.js",
+    "src/components/**/*.js",
+    "src/hooks/**/*.js",
+    "src/services/**/*.js",
+    "src/lib/dom.js",
+    "src/lib/html.js",
+    "src/lib/time.js",
+    "src/lib/index.js",
+    "src/types/**/*.d.ts"
+  ]
+}
