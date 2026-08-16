@@ -251,12 +251,50 @@ function statusLabel(status, guess) {
   return "미분류";
 }
 
-async function fileHash(file) {
-  const buf = await file.arrayBuffer();
-  const digest = await crypto.subtle.digest("SHA-256", buf);
+const SAMPLE_HASH_MIN = 32 * 1024 * 1024;
+const SAMPLE_HASH_CHUNK = 1024 * 1024;
+const SKIP_DUP_SIZE = 1024 * 1024 * 1024;
+
+function fileKey(file) {
+  return `${file.webkitRelativePath || file.name}|${file.size}|${file.lastModified}`;
+}
+
+function wantsDupHash(file, options) {
+  if (!options.skipDuplicates) return false;
+  if (fileKind(file) === "video" && !options.hashVideos) return false;
+  if (file.size >= SKIP_DUP_SIZE && !options.hashVideos) return false;
+  return true;
+}
+
+function concatBuffers(parts) {
+  const total = parts.reduce((n, part) => n + part.byteLength, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(new Uint8Array(part), offset);
+    offset += part.byteLength;
+  }
+  return out.buffer;
+}
+
+async function digestHex(buffer) {
+  const digest = await crypto.subtle.digest("SHA-256", buffer);
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+async function fileHash(file) {
+  if (file.size <= SAMPLE_HASH_MIN) {
+    return `f:${await digestHex(await file.arrayBuffer())}`;
+  }
+  const head = await file.slice(0, SAMPLE_HASH_CHUNK).arrayBuffer();
+  const tailStart = Math.max(0, file.size - SAMPLE_HASH_CHUNK);
+  const tail = await file.slice(tailStart).arrayBuffer();
+  const meta = new ArrayBuffer(8);
+  new DataView(meta).setUint32(0, file.size >>> 0);
+  new DataView(meta).setUint32(4, Math.floor(file.size / 0x100000000));
+  return `s:${await digestHex(concatBuffers([head, tail, meta]))}`;
 }
 
 function uniqueName(used, dir, filename) {
@@ -279,8 +317,77 @@ async function yieldUi() {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+function planFromMap(file, planByKey) {
+  if (!planByKey) return null;
+  return planByKey.get(fileKey(file)) || null;
+}
+
+function buildPlanMap(items) {
+  const map = new Map();
+  if (!items) return map;
+  items.forEach((item) => {
+    if (item && item.key) map.set(item.key, item);
+  });
+  return map;
+}
+
+async function planFile(file, options, seen, hashBySize) {
+  const cached = planFromMap(file, options.planByKey);
+  if (cached) return cached;
+  const kind = fileKind(file);
+  let isDup = false;
+  let digest = "";
+  if (wantsDupHash(file, options)) {
+    const slot = hashBySize.get(file.size);
+    if (!slot) {
+      hashBySize.set(file.size, { file, digest: "" });
+    } else {
+      if (!slot.digest) {
+        slot.digest = await fileHash(slot.file);
+        seen.add(slot.digest);
+      }
+      digest = await fileHash(file);
+      if (digest === slot.digest || seen.has(digest)) isDup = true;
+      else seen.add(digest);
+    }
+  }
+  const guess = isMediaFile(file)
+    ? await resolveDate(file, options.useFallbacks)
+    : { dt: null, source: "other" };
+  const { rel, status } = isDup
+    ? targetRel(isMediaFile(file) ? guess : { dt: null, source: "other" }, file)
+    : targetRel(guess, file);
+  return {
+    key: fileKey(file),
+    kind,
+    isDup,
+    digest,
+    guess,
+    rel,
+    status: isDup ? status : status,
+  };
+}
+
+async function writeFileChunked(file, writable, onChunk) {
+  if (typeof file.stream === "function") {
+    const reader = file.stream().getReader();
+    let written = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      await writable.write(value);
+      written += value.byteLength;
+      if (onChunk) await onChunk(written, file.size);
+    }
+    await writable.close();
+    return;
+  }
+  await writable.write(await file.arrayBuffer());
+  await writable.close();
+}
+
 async function analyzeFiles(files, options, onProgress) {
-  const { useFallbacks, skipDuplicates, cancelled } = options;
+  const { cancelled } = options;
   const result = {
     total: files.length,
     byKind: { photo: 0, video: 0, other: 0 },
@@ -289,6 +396,12 @@ async function analyzeFiles(files, options, onProgress) {
     duplicates: 0,
     bytesNeeded: 0,
     sampleLogs: [],
+    items: [],
+    planFlags: {
+      skipDuplicates: Boolean(options.skipDuplicates),
+      hashVideos: Boolean(options.hashVideos),
+      useFallbacks: Boolean(options.useFallbacks),
+    },
   };
   const seen = new Set();
   const hashBySize = new Map();
@@ -296,31 +409,10 @@ async function analyzeFiles(files, options, onProgress) {
   for (let i = 0; i < files.length; i += 1) {
     if (cancelled()) throw new Error("cancelled_preview");
     const file = files[i];
-    result.byKind[fileKind(file)] += 1;
-    let isDup = false;
-
-    if (skipDuplicates) {
-      const bucket = hashBySize.get(file.size) || [];
-      let digest = null;
-      for (const prevHash of bucket) {
-        digest = digest || (await fileHash(file));
-        if (digest === prevHash) {
-          isDup = true;
-          break;
-        }
-      }
-      if (!isDup) {
-        digest = digest || (await fileHash(file));
-        if (seen.has(digest)) isDup = true;
-        else {
-          seen.add(digest);
-          bucket.push(digest);
-          hashBySize.set(file.size, bucket);
-        }
-      }
-    }
-
-    if (isDup) {
+    const plan = await planFile(file, options, seen, hashBySize);
+    result.items.push(plan);
+    result.byKind[plan.kind] += 1;
+    if (plan.isDup) {
       result.duplicates += 1;
       if (result.sampleLogs.length < 40) {
         result.sampleLogs.push(`[중복예정] ${file.name} — 복사 생략`);
@@ -333,13 +425,11 @@ async function analyzeFiles(files, options, onProgress) {
         result.sampleLogs.push(`[기타파일] ${file.name} → ${OTHER_DIR}/`);
       }
     } else {
-      const guess = await resolveDate(file, useFallbacks);
-      const { rel } = targetRel(guess, file);
-      result.bySource[guess.source] += 1;
-      result.byFolder[rel] = (result.byFolder[rel] || 0) + 1;
+      result.bySource[plan.guess.source] += 1;
+      result.byFolder[plan.rel] = (result.byFolder[plan.rel] || 0) + 1;
       result.bytesNeeded += file.size;
       if (result.sampleLogs.length < 40) {
-        result.sampleLogs.push(`[${SOURCE_LABEL[guess.source]}] ${file.name} → ${rel}/`);
+        result.sampleLogs.push(`[${SOURCE_LABEL[plan.guess.source]}] ${file.name} → ${plan.rel}/`);
       }
     }
 
@@ -352,11 +442,13 @@ async function analyzeFiles(files, options, onProgress) {
 }
 
 async function copyToDirectory(files, destHandle, options, onProgress) {
-  const { useFallbacks, skipDuplicates, cancelled } = options;
+  const { cancelled } = options;
+  const work = { ...options, planByKey: buildPlanMap(options.planItems) };
   const stats = { ok: 0, estimated: 0, unclassified: 0, other: 0, duplicate: 0, error: 0, total: files.length };
   const copied = [];
   const skipped = [];
   const seen = new Set();
+  const hashBySize = new Map();
   const used = new Set();
 
   async function ensureDir(rel) {
@@ -372,34 +464,27 @@ async function copyToDirectory(files, destHandle, options, onProgress) {
     if (cancelled()) break;
     const file = files[i];
     try {
-      if (skipDuplicates) {
-        const digest = await fileHash(file);
-        if (seen.has(digest)) {
-          stats.duplicate += 1;
-          const guess = isMediaFile(file)
-            ? await resolveDate(file, useFallbacks)
-            : { dt: null, source: "other" };
-          const { rel } = targetRel(guess, file);
-          skipped.push({ folder: rel, name: file.name, source: sourceFolder(file), reason: "중복스킵" });
-          onProgress(i + 1, files.length, `[중복스킵] ${file.name} — 이미 같은 사진이 있어 건너뜀`);
-          continue;
-        }
-        seen.add(digest);
+      const plan = await planFile(file, work, seen, hashBySize);
+      if (plan.isDup) {
+        stats.duplicate += 1;
+        skipped.push({ folder: plan.rel, name: file.name, source: sourceFolder(file), reason: "중복스킵" });
+        onProgress(i + 1, files.length, `[중복스킵] ${file.name} — 이미 같은 사진이 있어 건너뜀`);
+        continue;
       }
-      const guess = isMediaFile(file)
-        ? await resolveDate(file, useFallbacks)
-        : { dt: null, source: "other" };
-      const { rel, status } = targetRel(guess, file);
-      const destPath = uniqueName(used, rel, file.name);
-      const filename = destPath.slice(rel.length + 1);
-      const dir = await ensureDir(rel);
+      const destPath = uniqueName(used, plan.rel, file.name);
+      const filename = destPath.slice(plan.rel.length + 1);
+      const dir = await ensureDir(plan.rel);
       const handle = await dir.getFileHandle(filename, { create: true });
       const writable = await handle.createWritable();
-      await writable.write(await file.arrayBuffer());
-      await writable.close();
+      await writeFileChunked(file, writable, async (written, total) => {
+        if (total >= SAMPLE_HASH_MIN) {
+          onProgress(i, files.length, `[복사중] ${file.name}`, { bytesWritten: written, bytesTotal: total });
+          await yieldUi();
+        }
+      });
       copied.push(destPath);
-      stats[status] += 1;
-      onProgress(i + 1, files.length, `[${statusLabel(status, guess)}] ${file.name} ──▶ ${rel}/`);
+      stats[plan.status] += 1;
+      onProgress(i + 1, files.length, `[${statusLabel(plan.status, plan.guess)}] ${file.name} ──▶ ${plan.rel}/`);
     } catch (err) {
       stats.error += 1;
       skipped.push({
@@ -506,10 +591,12 @@ function encodeUtf8(str) {
 }
 
 async function copyToZip(files, options, onProgress) {
-  const { useFallbacks, skipDuplicates, cancelled } = options;
+  const { cancelled } = options;
+  const work = { ...options, planByKey: buildPlanMap(options.planItems) };
   const stats = { ok: 0, estimated: 0, unclassified: 0, other: 0, duplicate: 0, error: 0, total: files.length };
   const skipped = [];
   const seen = new Set();
+  const hashBySize = new Map();
   const used = new Set();
   const locals = [];
   const centrals = [];
@@ -565,29 +652,18 @@ async function copyToZip(files, options, onProgress) {
     if (cancelled()) break;
     const file = files[i];
     try {
-      if (skipDuplicates) {
-        const digest = await fileHash(file);
-        if (seen.has(digest)) {
-          stats.duplicate += 1;
-          const guess = isMediaFile(file)
-            ? await resolveDate(file, useFallbacks)
-            : { dt: null, source: "other" };
-          const { rel } = targetRel(guess, file);
-          skipped.push({ folder: rel, name: file.name, source: sourceFolder(file), reason: "중복스킵" });
-          onProgress(i + 1, files.length, `[중복스킵] ${file.name}`);
-          continue;
-        }
-        seen.add(digest);
+      const plan = await planFile(file, work, seen, hashBySize);
+      if (plan.isDup) {
+        stats.duplicate += 1;
+        skipped.push({ folder: plan.rel, name: file.name, source: sourceFolder(file), reason: "중복스킵" });
+        onProgress(i + 1, files.length, `[중복스킵] ${file.name}`);
+        continue;
       }
-      const guess = isMediaFile(file)
-        ? await resolveDate(file, useFallbacks)
-        : { dt: null, source: "other" };
-      const { rel, status } = targetRel(guess, file);
-      const destPath = uniqueName(used, rel, file.name);
+      const destPath = uniqueName(used, plan.rel, file.name);
       const data = new Uint8Array(await file.arrayBuffer());
       addEntry(destPath, data);
-      stats[status] += 1;
-      onProgress(i + 1, files.length, `[${statusLabel(status, guess)}] ${file.name} ──▶ ${rel}/`);
+      stats[plan.status] += 1;
+      onProgress(i + 1, files.length, `[${statusLabel(plan.status, plan.guess)}] ${file.name} ──▶ ${plan.rel}/`);
     } catch (err) {
       stats.error += 1;
       skipped.push({
