@@ -96,7 +96,11 @@
           </label>
           <label class="check">
             <input id="opt-dup" type="checkbox" checked />
-            내용이 같은 중복 사진은 하나만 복사 (해시 비교)
+            같은 사진은 하나만 복사 (32MB 이상은 앞·뒤 1MB만 비교, 절전)
+          </label>
+          <label class="check">
+            <input id="opt-video-dup" type="checkbox" />
+            영상·1GB 이상도 중복 검사 (느림, 배터리 더 씀)
           </label>
 
           <div class="app-actions">
@@ -115,7 +119,9 @@
               <div class="pome" data-pome data-act="idle">
                 <span class="pome__say" data-pome-say>멍!</span>
                 <span class="pome__hearts"><i></i><i></i><i></i></span>
-                <img class="pome__shot" data-pome-shot src="img/runway/pome-act-idle.png" alt="" />
+                <span class="pome__halo"></span>
+                <img class="pome__shot is-on" data-pome-shot src="img/runway/pome-act-idle.png" alt="" />
+                <img class="pome__shot" data-pome-next alt="" />
               </div>
             </div>
             <progress id="progress" max="100" value="0"></progress>
