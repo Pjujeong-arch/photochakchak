@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.lic
+_premium_test/
+Thumbs.db
+desktop.ini
+.DS_Store
+.photochak_last_run.json
