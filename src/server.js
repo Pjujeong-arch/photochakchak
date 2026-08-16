@@ -20,8 +20,11 @@ const MIME = {
 
 function safeJoin(root, urlPath) {
   const decoded = decodeURIComponent((urlPath || "/").split("?")[0]);
-  const target = path.normalize(path.join(root, decoded));
-  if (!target.startsWith(root)) return null;
+  const rel = decoded.replace(/^[/\\]+/, "").replace(/\\/g, "/");
+  if (!rel || rel.split("/").includes("..")) return null;
+  const target = path.normalize(path.join(root, rel));
+  const prefix = root.endsWith(path.sep) ? root : root + path.sep;
+  if (target !== root && !target.startsWith(prefix)) return null;
   return target;
 }
 
@@ -39,7 +42,11 @@ const server = http.createServer((req, res) => {
       return;
     }
     const type = MIME[path.extname(filePath).toLowerCase()] || "application/octet-stream";
-    res.writeHead(200, { "Content-Type": type, "Cache-Control": "no-cache" });
+    const isImg = type.startsWith("image/");
+    res.writeHead(200, {
+      "Content-Type": type,
+      "Cache-Control": isImg ? "public, max-age=86400" : "no-cache",
+    });
     fs.createReadStream(filePath).pipe(res);
   });
 });
