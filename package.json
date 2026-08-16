@@ -1,0 +1,13 @@
+{
+  "name": "photochakchak",
+  "private": true,
+  "version": "1.1.0",
+  "description": "포토착착 — 사진·영상을 연월 폴더로 복사 정리",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "preview": "node src/cli.js preview",
+    "sort": "node src/cli.js copy",
+    "undo": "node src/cli.js undo"
+  }
+}
