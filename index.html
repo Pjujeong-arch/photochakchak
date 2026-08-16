@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>포토착착 — MVP 사진 정돈</title>
+  <meta name="description" content="EXIF·파일명·파일일로 연월 정리. 미리보기, 중복 스킵, 실행 취소. 원본은 복사만." />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <main>
+      <section class="reel" aria-label="포토착착 설명 영상">
+        <div class="reel__stage">
+          <div class="logo">포토착착</div>
+          <article class="shot shot--a">
+            <img src="img/pome-2024-03.png" alt="봄 포메라이언" />
+          </article>
+          <article class="shot shot--b shot--video">
+            <img src="img/pome-2024-11.png" alt="가을 포메라이언 영상" />
+          </article>
+          <article class="shot shot--c">
+            <img src="img/pome-2025-01.png" alt="날짜 없는 포메라이언" />
+          </article>
+          <div class="bin bin--a">
+            <div class="bin__tab">2024-03</div>
+            <div class="bin__pocket">
+              <img class="bin__thumb bin__thumb--a" src="img/pome-2024-03.png" alt="" />
+            </div>
+          </div>
+          <div class="bin bin--b">
+            <div class="bin__tab">2024-11</div>
+            <div class="bin__pocket">
+              <img class="bin__thumb bin__thumb--b" src="img/pome-2024-11.png" alt="" />
+            </div>
+          </div>
+          <div class="bin bin--c bin--misc">
+            <div class="bin__tab">미분류</div>
+            <div class="bin__pocket">
+              <img class="bin__thumb bin__thumb--c" src="img/pome-2025-01.png" alt="" />
+            </div>
+          </div>
+          <p class="reel__cap"><span data-dog-cap>멍멍… 포메 사진이 막 쌓여있어 왈</span></p>
+        </div>
+      </section>
+
+      <section class="section section--app" id="app">
+        <h1 class="app-title">사진·영상 정리</h1>
+
+        <div class="app-panel">
+          <div class="folder-picks">
+          <div class="field">
+            <span class="field__label">[1] 정리할 폴더 (사진·영상·기타)</span>
+            <div class="field__row">
+              <button class="btn btn--pick" type="button" data-pick-source>폴더 선택</button>
+              <input id="source-input" type="file" webkitdirectory multiple hidden />
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="field__label">[2] 정리본 저장 폴더 (원본과 다른 위치, 연도월·미분류·기타파일)</span>
+            <div class="field__row">
+              <button class="btn btn--pick" type="button" data-pick-dest>폴더 선택</button>
+            </div>
+          </div>
+          </div>
+
+          <label class="check">
+            <input id="opt-fallback" type="checkbox" checked />
+            EXIF 없으면 파일명·파일 날짜로 추정 (카톡/캡처 대응)
+          </label>
+          <label class="check">
+            <input id="opt-dup" type="checkbox" checked />
+            내용이 같은 중복 사진은 하나만 복사 (해시 비교)
+          </label>
+
+          <div class="app-actions">
+            <div class="app-flow">
+              <button class="btn btn--safe" type="button" data-preview>① 미리보기 (복사 안 함)</button>
+              <button class="btn btn--start" type="button" data-start>② 자동 분류 시작</button>
+            </div>
+            <button class="btn btn--zip" type="button" data-zip>ZIP으로 받기</button>
+            <button class="btn btn--undo" type="button" data-undo>실행 취소</button>
+            <button class="btn btn--stop" type="button" data-cancel disabled>중지</button>
+          </div>
+
+          <div class="progress-box">
+            <div class="pome-runway" aria-hidden="true">
+              <div class="pome-runway__path"></div>
+              <div class="pome" data-pome data-act="idle">
+                <span class="pome__say" data-pome-say>멍!</span>
+                <span class="pome__hearts"><i></i><i></i><i></i></span>
+                <svg class="pome__svg" viewBox="0 0 100 92" fill="none">
+                  <defs>
+                    <radialGradient id="pomeFur" cx="38%" cy="32%" r="70%">
+                      <stop offset="0%" stop-color="#fff3dc" />
+                      <stop offset="42%" stop-color="#f0c98a" />
+                      <stop offset="100%" stop-color="#d4924a" />
+                    </radialGradient>
+                    <radialGradient id="pomeFurDark" cx="40%" cy="30%" r="70%">
+                      <stop offset="0%" stop-color="#efc07a" />
+                      <stop offset="100%" stop-color="#c47d36" />
+                    </radialGradient>
+                    <radialGradient id="pomeMuzzle" cx="40%" cy="30%" r="70%">
+                      <stop offset="0%" stop-color="#fff8ee" />
+                      <stop offset="100%" stop-color="#f0d2b0" />
+                    </radialGradient>
+                  </defs>
+                  <ellipse class="pome-shadow" cx="52" cy="86" rx="20" ry="3.4" fill="rgba(90,48,28,.16)" />
+                  <g class="pome-actor">
+                    <g class="pome-tail">
+                      <ellipse cx="18" cy="50" rx="11" ry="8" fill="url(#pomeFurDark)" transform="rotate(-28 18 50)" />
+                      <ellipse cx="12" cy="44" rx="7" ry="6" fill="#f3d09a" transform="rotate(-18 12 44)" />
+                      <ellipse cx="8" cy="49" rx="5.5" ry="4.5" fill="#e8b86a" />
+                    </g>
+                    <g class="pome-leg pome-leg--bl"><rect x="34" y="70" width="7" height="12" rx="3.5" fill="#c9843f" /></g>
+                    <g class="pome-leg pome-leg--br"><rect x="44" y="70" width="7" height="12" rx="3.5" fill="#b87432" /></g>
+                    <ellipse class="pome-body" cx="46" cy="58" rx="22" ry="16" fill="url(#pomeFur)" />
+                    <ellipse cx="36" cy="56" rx="12" ry="12" fill="url(#pomeFurDark)" />
+                    <ellipse cx="58" cy="56" rx="13" ry="12" fill="#f6d7a8" />
+                    <circle cx="28" cy="52" r="6" fill="#efc07a" />
+                    <circle cx="62" cy="48" r="5.5" fill="#fff1d4" />
+                    <g class="pome-leg pome-leg--fl"><rect x="54" y="70" width="7" height="12" rx="3.5" fill="#d4924a" /></g>
+                    <g class="pome-leg pome-leg--fr"><rect x="64" y="70" width="7" height="12" rx="3.5" fill="#c9843f" /></g>
+                    <g class="pome-head">
+                      <g class="pome-ear pome-ear--l">
+                        <ellipse cx="58" cy="20" rx="7" ry="11" fill="#e8a85c" transform="rotate(-22 58 20)" />
+                        <ellipse cx="58.5" cy="22" rx="3.2" ry="6" fill="#f2b8a0" transform="rotate(-22 58.5 22)" />
+                      </g>
+                      <g class="pome-ear pome-ear--r">
+                        <ellipse cx="82" cy="20" rx="7" ry="11" fill="#e0a050" transform="rotate(26 82 20)" />
+                        <ellipse cx="81.5" cy="22" rx="3.2" ry="6" fill="#f2b8a0" transform="rotate(26 81.5 22)" />
+                      </g>
+                      <circle cx="70" cy="36" r="16.5" fill="url(#pomeFur)" />
+                      <circle cx="58" cy="32" r="6" fill="#f3c98a" />
+                      <circle cx="82" cy="30" r="5.5" fill="#fff1d4" />
+                      <circle cx="70" cy="22" r="5" fill="#f7dcb0" />
+                      <ellipse cx="76" cy="44" rx="9" ry="7" fill="url(#pomeMuzzle)" />
+                      <g class="pome-eye pome-eye--l">
+                        <ellipse cx="65" cy="34.5" rx="3.1" ry="3.6" fill="#2a221e" />
+                        <circle cx="66.1" cy="33.4" r="1.05" fill="#fff" />
+                      </g>
+                      <g class="pome-eye pome-eye--r">
+                        <ellipse cx="77.5" cy="34" rx="3.1" ry="3.6" fill="#2a221e" />
+                        <circle cx="78.6" cy="32.9" r="1.05" fill="#fff" />
+                      </g>
+                      <ellipse cx="82" cy="44" rx="2.4" ry="1.9" fill="#3a2a24" />
+                      <path d="M78 47.2c1.6 1.6 4.2 1.6 5.6 0" stroke="#3a2a24" stroke-width="1.15" stroke-linecap="round" />
+                      <ellipse class="pome-tongue" cx="81.2" cy="50.5" rx="2.4" ry="3.1" fill="#e8899a" />
+                    </g>
+                    <g class="pome-puffs">
+                      <circle r="3.2" fill="rgba(255,248,243,.85)" />
+                      <circle r="2.2" fill="rgba(255,248,243,.7)" />
+                    </g>
+                  </g>
+                  <g class="pome-bowl">
+                    <path d="M6 78h16l-1.6 6.2a6 6 0 0 1-5.9 4.6h-1a6 6 0 0 1-5.9-4.6L6 78z" fill="#7eb7c9" stroke="#5a8fa0" stroke-width="1.2" />
+                    <ellipse cx="14" cy="78.4" rx="7.2" ry="2.1" fill="#bfe8f4" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <progress id="progress" max="100" value="0"></progress>
+            <p data-status>먼저 [미리보기]로 어떻게 분류될지·용량이 괜찮은지 확인하세요.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>포토착착 MVP · <span data-year></span></span>
+      <span>원본은 유지합니다. 정리는 복사로만.</span>
+    </footer>
+  </div>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+  <div class="modal" hidden data-modal>
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h2 class="modal__title" id="modal-title" data-modal-title></h2>
+      <div class="modal__body" data-modal-body></div>
+      <button class="btn btn--start" type="button" data-modal-close>확인</button>
+    </div>
+  </div>
+  <script src="js/engine.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
