@@ -1,0 +1,14 @@
+---
+description: Security — 시크릿, 경로, XSS, 원본 보존, Git 가드
+alwaysApply: true
+---
+
+# Security
+
+- 시크릿·DB URL·토큰은 `process.env`만. 코드·커밋에 하드코딩하면 거부하고 `.env`로 옮긴다.
+- `.env`, `.env.local`, `*.lic`는 Git에 올리지 않는다.
+- Node 정적 서버는 `public` 밖으로 나가지 못하게 경로를 정규화한다 (`..` 차단).
+- CLI 복사는 원본 폴더와 저장 폴더가 같거나 원본 안이면 거부한다. 원본은 이동·삭제하지 않고 복사만 한다.
+- 모달·로그에 파일명을 넣을 때 `escapeHtml`을 쓴다. `innerHTML`에 사용자 경로를 그대로 넣지 않는다.
+- API·폼을 추가하면 입력을 검증한다(Zod 등은 그때). Auth/DB를 붙이면 사용자별 접근 제어(RLS)를 함께 넣는다.
+- 복사 중 Wake Lock은 UX용이다. 권한 상승이나 시스템 설정을 바꾸지 않는다.

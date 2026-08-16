@@ -1,0 +1,14 @@
+---
+description: 월별 베스트 10장 랭킹 — 전문가 기준. 구현할 때만 적용.
+globs: src/services/rank*.js,src/hooks/use-rank*.js
+alwaysApply: false
+---
+
+# 월별 베스트 10
+
+상세 기준표: `docs/monthly-best-picks.md`
+
+- 대상은 복사된 `YYYY-MM` 사진만. 원본 이동·삭제 금지.
+- 게이트 탈락 → 장르 → 기술·구도·순간 → 장르 가중 → 유저 특징 → 다양성(연사 제거) → 이유 2~3개.
+- 점수·EXIF·임베딩은 `services/`에 둔다. 컴포넌트는 순위·이유 렌더만.
+- 설명이 기준 ID에 묶이지 않은 추측 문장을 만들지 않는다.
