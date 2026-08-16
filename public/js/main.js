@@ -23,6 +23,7 @@ const els = {
   destMeta: $("[data-dest-meta]"),
   fallback: $("#opt-fallback"),
   skipDup: $("#opt-dup"),
+  videoDup: $("#opt-video-dup"),
   previewBtn: $("[data-preview]"),
   startBtn: $("[data-start]"),
   zipBtn: $("[data-zip]"),
@@ -32,6 +33,7 @@ const els = {
   pome: $("[data-pome]"),
   pomeSay: $("[data-pome-say]"),
   pomeShot: $("[data-pome-shot]"),
+  pomeNext: $("[data-pome-next]"),
   status: $("[data-status]"),
   log: $("#log"),
   modal: $("[data-modal]"),
@@ -45,6 +47,7 @@ const state = {
   preview: null,
   running: false,
   cancelled: false,
+  keepAwake: false,
 };
 
 function showToast(message) {
@@ -126,12 +129,65 @@ const POME_ACTS = [
 let pomeActTimer = 0;
 let pomeActIndex = 0;
 let etaRate = null;
+let pomeActId = "idle";
+const pomeCache = new Map();
+
+function pomeUrl(id) {
+  return new URL(`img/runway/pome-act-${id}.png`, document.baseURI).href;
+}
 
 function preloadPomeShots() {
-  POME_ACTS.concat([{ id: "idle" }]).forEach((act) => {
+  ["idle"].concat(POME_ACTS.map((act) => act.id)).forEach((id) => {
     const img = new Image();
-    img.src = `img/runway/pome-act-${act.id}.png`;
+    img.decoding = "async";
+    img.src = pomeUrl(id);
+    pomeCache.set(id, img);
   });
+}
+
+let pomePaint = 0;
+
+function showPomeShot(id) {
+  const url = pomeUrl(id);
+  const on = els.pomeShot;
+  const next = els.pomeNext;
+  if (!on) return;
+  if (on.classList.contains("is-on") && on.complete && on.naturalWidth && on.src === url) return;
+
+  const token = (pomePaint += 1);
+  const paint = () => {
+    if (token !== pomePaint) return;
+    if (!next) {
+      on.src = url;
+      on.classList.add("is-on");
+      return;
+    }
+    const reveal = () => {
+      if (token !== pomePaint) return;
+      next.classList.add("is-on");
+      on.classList.remove("is-on");
+      els.pomeShot = next;
+      els.pomeNext = on;
+      next.onload = null;
+    };
+    next.onload = reveal;
+    if (next.complete && next.naturalWidth && next.src === url) {
+      reveal();
+      return;
+    }
+    next.src = url;
+  };
+
+  const cached = pomeCache.get(id);
+  if (cached && cached.complete && cached.naturalWidth > 0) {
+    paint();
+    return;
+  }
+  const loader = cached || new Image();
+  loader.onload = paint;
+  loader.onerror = paint;
+  loader.src = url;
+  pomeCache.set(id, loader);
 }
 
 function setProgressPct(pct) {
@@ -153,8 +209,9 @@ function setPomeAct(id, say) {
   const pome = els.pome;
   if (!pome) return;
   pome.dataset.act = id;
+  pomeActId = id;
   if (els.pomeSay && say) els.pomeSay.textContent = say;
-  if (els.pomeShot) els.pomeShot.src = `img/runway/pome-act-${id}.png`;
+  showPomeShot(id);
 }
 
 function startPomeShow() {
@@ -184,6 +241,43 @@ function stopPomeShow(resetting) {
   pome.classList.toggle("is-done", done);
   setPomeAct(done ? "cute" : "idle", done ? "다 했다멍 ♡" : "멍!");
 }
+
+let wakeLockSentinel = null;
+
+async function holdCopyWakeLock() {
+  if (!state.keepAwake) return;
+  if (!navigator.wakeLock || !navigator.wakeLock.request) return;
+  try {
+    if (wakeLockSentinel && wakeLockSentinel.released === false) return;
+    wakeLockSentinel = await navigator.wakeLock.request("screen");
+    wakeLockSentinel.addEventListener("release", () => {
+      if (state.running && state.keepAwake && document.visibilityState === "visible") {
+        holdCopyWakeLock();
+      }
+    });
+  } catch (_err) {
+    wakeLockSentinel = null;
+  }
+}
+
+async function releaseCopyWakeLock() {
+  state.keepAwake = false;
+  const lock = wakeLockSentinel;
+  wakeLockSentinel = null;
+  if (lock) {
+    try {
+      await lock.release();
+    } catch (_err) {
+      /* ignore */
+    }
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && state.running && state.keepAwake) {
+    holdCopyWakeLock();
+  }
+});
 
 function setBusy(busy) {
   state.running = busy;
@@ -305,9 +399,22 @@ function bindDest() {
 }
 
 function options() {
-  return {
-    useFallbacks: els.fallback.checked,
+  const flags = {
     skipDuplicates: els.skipDup.checked,
+    hashVideos: Boolean(els.videoDup && els.videoDup.checked),
+    useFallbacks: els.fallback.checked,
+  };
+  const preview = state.preview;
+  const samePlan =
+    preview &&
+    preview.items &&
+    preview.planFlags &&
+    preview.planFlags.skipDuplicates === flags.skipDuplicates &&
+    preview.planFlags.hashVideos === flags.hashVideos &&
+    preview.planFlags.useFallbacks === flags.useFallbacks;
+  return {
+    ...flags,
+    planItems: samePlan ? preview.items : null,
     cancelled,
   };
 }
@@ -334,7 +441,7 @@ function renderPreview(result) {
     </div>
     <p>복사 예정 ${(result.total - result.duplicates).toLocaleString()}개 · 중복 ${result.duplicates.toLocaleString()}개 · 미분류 ${(result.bySource.none || 0).toLocaleString()}개</p>
     <p>필요 용량 약 ${formatBytes(result.bytesNeeded)}${est ? ` · 날짜 추정 ${est.toLocaleString()}개` : ""}</p>
-    <p class="modal__woof-note">기타파일은 사진·영상이 아닌 파일을 모아둘 곳이야 왈. 지금은 미리보기만! 복사는 아직 안 했다멍.</p>`
+    <p class="modal__woof-note">기타파일은 사진·영상이 아닌 파일을 모아둘 곳이야 왈. 영상은 기본으로 중복검사를 건너뛰어 배터리를 아낀다멍.</p>`
   );
 }
 
@@ -395,19 +502,27 @@ function formatRemain(ms) {
   return restMin ? `약 ${hours}시간 ${restMin}분 남음` : `약 ${hours}시간 남음`;
 }
 
-function progressLabel(done, total, startedAt, verb) {
+function progressLabel(done, total, startedAt, verb, extra) {
   const pct = total ? Math.round((done / total) * 100) : 0;
   const head = verb ? `${verb} ` : "";
   const counts = `${head}${pct}% (${done.toLocaleString()}/${total.toLocaleString()})`;
-  if (!done || done >= total) return counts;
+  const fileBit =
+    extra && extra.bytesTotal
+      ? ` · ${formatBytes(extra.bytesWritten || 0)}/${formatBytes(extra.bytesTotal)}`
+      : "";
+  if (done >= total) return counts;
+  if (!done) {
+    const elapsed = performance.now() - startedAt;
+    if (elapsed < 350) return `${counts} · 남은 시간 계산 중…${fileBit}`;
+  }
   const elapsed = performance.now() - startedAt;
-  if (elapsed < 350) return `${counts} · 남은 시간 계산 중…`;
-  const inst = done / elapsed;
+  if (elapsed < 350) return `${counts} · 남은 시간 계산 중…${fileBit}`;
+  const inst = Math.max(done, 0.25) / elapsed;
   etaRate = etaRate == null ? inst : etaRate * 0.72 + inst * 0.28;
-  const remain = (total - done) / Math.max(etaRate, 1e-9);
+  const remain = (total - Math.max(done, 0.25)) / Math.max(etaRate, 1e-9);
   const perSec = etaRate * 1000;
   const speed = total >= 200 && perSec >= 0.5 ? ` · 초당 ${perSec.toFixed(perSec >= 10 ? 0 : 1)}개` : "";
-  return `${counts} · ${formatRemain(remain)}${speed}`;
+  return `${counts} · ${formatRemain(remain)}${speed}${fileBit}`;
 }
 
 function doneSummary(stats) {
@@ -440,12 +555,14 @@ async function runCopy() {
   clearLog();
   logLine("원본은 유지합니다. 문제는 「실행 취소」로 이번 복사본만 되돌릴 수 있습니다.");
   setBusy(true);
+  state.keepAwake = true;
+  await holdCopyWakeLock();
   const startedAt = performance.now();
-  els.status.textContent = "분류 시작 · 남은 시간 계산 중…";
+  els.status.textContent = "분류 시작 · 절전 방지 · 남은 시간 계산 중…";
   try {
-    const { stats, skipped } = await copyToDirectory(state.files, state.destHandle, options(), (done, total, msg) => {
+    const { stats, skipped } = await copyToDirectory(state.files, state.destHandle, options(), (done, total, msg, extra) => {
       setProgressPct(total ? (done / total) * 100 : 0);
-      els.status.textContent = progressLabel(done, total, startedAt);
+      els.status.textContent = progressLabel(done, total, startedAt, "", extra);
     });
     const summary = doneSummary(stats);
     els.status.textContent = summary;
@@ -454,6 +571,7 @@ async function runCopy() {
     els.status.textContent = "오류로 중단 — 원본 유지";
     logLine(`[오류] ${err.message || err}`);
   } finally {
+    await releaseCopyWakeLock();
     setBusy(false);
   }
 }
@@ -469,12 +587,14 @@ async function runZip() {
   clearLog();
   logLine("원본은 유지합니다. 정리본을 ZIP으로 받습니다.");
   setBusy(true);
+  state.keepAwake = true;
+  await holdCopyWakeLock();
   const startedAt = performance.now();
-  els.status.textContent = "ZIP 시작 · 남은 시간 계산 중…";
+  els.status.textContent = "ZIP 시작 · 절전 방지 · 남은 시간 계산 중…";
   try {
-    const { stats, blob, skipped } = await copyToZip(state.files, options(), (done, total) => {
+    const { stats, blob, skipped } = await copyToZip(state.files, options(), (done, total, msg, extra) => {
       setProgressPct(total ? (done / total) * 100 : 0);
-      els.status.textContent = progressLabel(done, total, startedAt);
+      els.status.textContent = progressLabel(done, total, startedAt, "", extra);
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -489,6 +609,7 @@ async function runZip() {
     els.status.textContent = "오류로 중단 — 원본 유지";
     logLine(`[오류] ${err.message || err}`);
   } finally {
+    await releaseCopyWakeLock();
     setBusy(false);
   }
 }
