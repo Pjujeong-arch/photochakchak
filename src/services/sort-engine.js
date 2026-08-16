@@ -1,4 +1,3 @@
-window.PhotoChak = (function () {
 const IMAGE_EXTENSIONS = new Set([
   ".jpg",
   ".jpeg",
@@ -73,12 +72,8 @@ function isSkippedName(name) {
   return SKIP_NAMES.has(n);
 }
 
-function isSortableFile(file) {
-  return !isSkippedName(file.name || "");
-}
-
 function isImageFile(file) {
-  return isSortableFile(file);
+  return !isSkippedName(file.name || "");
 }
 
 function formatBytes(n) {
@@ -90,6 +85,10 @@ function formatBytes(n) {
     value /= 1024;
   }
   return `${value.toFixed(1)} TB`;
+}
+
+function errMsg(err) {
+  return err instanceof Error ? err.message : String(err);
 }
 
 function validYear(dt) {
@@ -216,7 +215,7 @@ async function resolveDate(file, useFallbacks) {
     const head = await file.slice(0, 65536).arrayBuffer();
     const exif = extractExifDate(head);
     if (exif) return { dt: exif, source: "exif" };
-  } catch (_err) {
+  } catch {
     /* ignore broken images */
   }
   if (!useFallbacks) return { dt: null, source: "none" };
@@ -364,7 +363,7 @@ async function planFile(file, options, seen, hashBySize) {
     digest,
     guess,
     rel,
-    status: isDup ? status : status,
+    status,
   };
 }
 
@@ -372,7 +371,7 @@ async function writeFileChunked(file, writable, onChunk) {
   if (typeof file.stream === "function") {
     const reader = file.stream().getReader();
     let written = 0;
-    while (true) {
+    for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       await writable.write(value);
@@ -392,11 +391,10 @@ async function analyzeFiles(files, options, onProgress) {
     total: files.length,
     byKind: { photo: 0, video: 0, other: 0 },
     bySource: { exif: 0, filename: 0, filedate: 0, none: 0, other: 0 },
-    byFolder: {},
+    byFolder: /** @type {Record<string, number>} */ ({}),
     duplicates: 0,
     bytesNeeded: 0,
-    sampleLogs: [],
-    items: [],
+    items: /** @type {object[]} */ ([]),
     planFlags: {
       skipDuplicates: Boolean(options.skipDuplicates),
       hashVideos: Boolean(options.hashVideos),
@@ -411,26 +409,17 @@ async function analyzeFiles(files, options, onProgress) {
     const file = files[i];
     const plan = await planFile(file, options, seen, hashBySize);
     result.items.push(plan);
-    result.byKind[plan.kind] += 1;
+    result.byKind[/** @type {keyof typeof result.byKind} */ (plan.kind)] += 1;
     if (plan.isDup) {
       result.duplicates += 1;
-      if (result.sampleLogs.length < 40) {
-        result.sampleLogs.push(`[중복예정] ${file.name} — 복사 생략`);
-      }
     } else if (!isMediaFile(file)) {
       result.bySource.other += 1;
       result.byFolder[OTHER_DIR] = (result.byFolder[OTHER_DIR] || 0) + 1;
       result.bytesNeeded += file.size;
-      if (result.sampleLogs.length < 40) {
-        result.sampleLogs.push(`[기타파일] ${file.name} → ${OTHER_DIR}/`);
-      }
     } else {
-      result.bySource[plan.guess.source] += 1;
+      result.bySource[/** @type {keyof typeof result.bySource} */ (plan.guess.source)] += 1;
       result.byFolder[plan.rel] = (result.byFolder[plan.rel] || 0) + 1;
       result.bytesNeeded += file.size;
-      if (result.sampleLogs.length < 40) {
-        result.sampleLogs.push(`[${SOURCE_LABEL[plan.guess.source]}] ${file.name} → ${plan.rel}/`);
-      }
     }
 
     if (i === 0 || i % 3 === 0 || i === files.length - 1) {
@@ -483,17 +472,18 @@ async function copyToDirectory(files, destHandle, options, onProgress) {
         }
       });
       copied.push(destPath);
-      stats[plan.status] += 1;
+      stats[/** @type {keyof typeof stats} */ (plan.status)] += 1;
       onProgress(i + 1, files.length, `[${statusLabel(plan.status, plan.guess)}] ${file.name} ──▶ ${plan.rel}/`);
     } catch (err) {
+      const msg = errMsg(err);
       stats.error += 1;
       skipped.push({
         folder: sourceFolder(file),
         name: file.name,
         source: sourceFolder(file),
-        reason: `실패 (${err.message || err})`,
+        reason: `실패 (${msg})`,
       });
-      onProgress(i + 1, files.length, `[실패] ${file.name} ──▶ ${err.message || err}`);
+      onProgress(i + 1, files.length, `[실패] ${file.name} ──▶ ${msg}`);
     }
     if (i % 4 === 0) await yieldUi();
   }
@@ -520,7 +510,7 @@ async function copyToDirectory(files, destHandle, options, onProgress) {
     const w = await mh.createWritable();
     await w.write(JSON.stringify(manifest, null, 2));
     await w.close();
-  } catch (_err) {
+  } catch {
     /* ignore */
   }
   return { stats, copied, skipped };
@@ -532,7 +522,7 @@ async function undoLastRun(destHandle) {
     const mh = await destHandle.getFileHandle(MANIFEST_NAME);
     const file = await mh.getFile();
     data = JSON.parse(await file.text());
-  } catch (_err) {
+  } catch {
     throw new Error("되돌릴 기록이 없습니다. 저장 폴더에 마지막 실행 기록이 있어야 합니다.");
   }
   const files = data.copied_files || [];
@@ -546,13 +536,13 @@ async function undoLastRun(destHandle) {
       for (const part of parts) dir = await dir.getDirectoryHandle(part);
       await dir.removeEntry(name);
       deleted += 1;
-    } catch (_err) {
+    } catch {
       errors += 1;
     }
   }
   try {
     await destHandle.removeEntry(MANIFEST_NAME);
-  } catch (_err) {
+  } catch {
     /* ignore */
   }
   return { deleted, errors };
@@ -598,8 +588,8 @@ async function copyToZip(files, options, onProgress) {
   const seen = new Set();
   const hashBySize = new Map();
   const used = new Set();
-  const locals = [];
-  const centrals = [];
+  const locals = /** @type {Uint8Array[]} */ ([]);
+  const centrals = /** @type {Uint8Array[]} */ ([]);
   let offset = 0;
   let entryCount = 0;
 
@@ -662,17 +652,18 @@ async function copyToZip(files, options, onProgress) {
       const destPath = uniqueName(used, plan.rel, file.name);
       const data = new Uint8Array(await file.arrayBuffer());
       addEntry(destPath, data);
-      stats[plan.status] += 1;
+      stats[/** @type {keyof typeof stats} */ (plan.status)] += 1;
       onProgress(i + 1, files.length, `[${statusLabel(plan.status, plan.guess)}] ${file.name} ──▶ ${plan.rel}/`);
     } catch (err) {
+      const msg = errMsg(err);
       stats.error += 1;
       skipped.push({
         folder: sourceFolder(file),
         name: file.name,
         source: sourceFolder(file),
-        reason: `실패 (${err.message || err})`,
+        reason: `실패 (${msg})`,
       });
-      onProgress(i + 1, files.length, `[실패] ${file.name} ──▶ ${err.message || err}`);
+      onProgress(i + 1, files.length, `[실패] ${file.name} ──▶ ${msg}`);
     }
     if (i % 4 === 0) await yieldUi();
   }
@@ -704,11 +695,11 @@ async function copyToZip(files, options, onProgress) {
     u32(offset),
     u16(0),
   ];
-  const blob = new Blob([...locals, ...centrals, ...eocd], { type: "application/zip" });
+  const blob = new Blob(/** @type {BlobPart[]} */ ([...locals, ...centrals, ...eocd]), { type: "application/zip" });
   return { stats, blob, skipped };
 }
 
-return {
+export {
   isImageFile,
   formatBytes,
   analyzeFiles,
@@ -716,4 +707,3 @@ return {
   copyToZip,
   undoLastRun,
 };
-})();

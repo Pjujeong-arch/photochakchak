@@ -14,82 +14,16 @@
   <div class="layout">
     <main>
       <section class="reel" aria-label="포토착착 설명 영상">
-        <div class="reel__stage">
+        <div class="reel__stage" data-reel-stage>
           <div class="logo">포토착착</div>
-          <article class="shot shot--a">
-            <img src="img/pome-2024-03.png" alt="봄 포메라이언" />
-          </article>
-          <article class="shot shot--b shot--video">
-            <img src="img/pome-2024-11.png" alt="가을 포메라이언 영상" />
-          </article>
-          <article class="shot shot--c">
-            <img src="img/pome-2025-01.png" alt="날짜 없는 포메라이언" />
-          </article>
-          <div class="bin bin--a">
-            <div class="bin__tab">2024-03</div>
-            <div class="bin__pocket">
-              <img class="bin__thumb bin__thumb--a" src="img/pome-2024-03.png" alt="" />
-            </div>
-          </div>
-          <div class="bin bin--b">
-            <div class="bin__tab">2024-11</div>
-            <div class="bin__pocket">
-              <img class="bin__thumb bin__thumb--b" src="img/pome-2024-11.png" alt="" />
-            </div>
-          </div>
-          <div class="bin bin--c bin--misc">
-            <div class="bin__tab">미분류</div>
-            <div class="bin__pocket">
-              <img class="bin__thumb bin__thumb--c" src="img/pome-2025-01.png" alt="" />
-            </div>
-          </div>
           <p class="reel__cap"><span data-dog-cap>멍멍… 포메 사진이 막 쌓여있어 왈</span></p>
         </div>
       </section>
 
       <section class="section section--app" id="app">
         <h1 class="app-title">사진·영상 정리</h1>
-
         <div class="app-panel">
-          <div class="folder-picks">
-          <div class="field">
-            <span class="field__label">[1] 정리할 폴더 (사진·영상·기타)</span>
-            <div class="field__row">
-              <button class="btn btn--pick" type="button" data-pick-source>
-                <span class="pick__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M3.5 8.5V7a2 2 0 0 1 2-2h4.2l1.6 1.8H18.5A2 2 0 0 1 20.5 9v8.2a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V8.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-                    <path d="M3.5 10.5h17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                  </svg>
-                </span>
-                <span class="pick__copy">
-                  <strong class="pick__name" data-source-name>폴더 선택</strong>
-                  <span class="pick__meta" data-source-meta>정리할 사진·영상·기타를 담아요</span>
-                </span>
-              </button>
-              <input id="source-input" type="file" webkitdirectory multiple hidden />
-            </div>
-          </div>
-
-          <div class="field">
-            <span class="field__label">[2] 정리본 저장 폴더 (원본과 다른 위치, 연도월·미분류·기타파일)</span>
-            <div class="field__row">
-              <button class="btn btn--pick" type="button" data-pick-dest>
-                <span class="pick__icon pick__icon--dest" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M3.5 8.5V7a2 2 0 0 1 2-2h4.2l1.6 1.8H18.5A2 2 0 0 1 20.5 9v8.2a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V8.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-                    <path d="M12 11.2v6.2M9.4 15l2.6 2.4L14.6 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </span>
-                <span class="pick__copy">
-                  <strong class="pick__name" data-dest-name>폴더 선택</strong>
-                  <span class="pick__meta" data-dest-meta>원본과 다른 위치에 복사해요</span>
-                </span>
-              </button>
-            </div>
-          </div>
-          </div>
-
+          <div class="folder-picks" data-folder-picks></div>
           <label class="check">
             <input id="opt-fallback" type="checkbox" checked />
             EXIF 없으면 파일명·파일 날짜로 추정 (카톡/캡처 대응)
@@ -102,7 +36,6 @@
             <input id="opt-video-dup" type="checkbox" />
             영상·1GB 이상도 중복 검사 (느림, 배터리 더 씀)
           </label>
-
           <div class="app-actions">
             <div class="app-flow">
               <button class="btn btn--safe" type="button" data-preview>① 미리보기 (복사 안 함)</button>
@@ -112,7 +45,6 @@
             <button class="btn btn--undo" type="button" data-undo>실행 취소</button>
             <button class="btn btn--stop" type="button" data-cancel disabled>중지</button>
           </div>
-
           <div class="progress-box">
             <div class="pome-runway" aria-hidden="true">
               <div class="pome-runway__path"></div>
@@ -130,13 +62,11 @@
         </div>
       </section>
     </main>
-
     <footer class="site-footer">
       <span>포토착착 MVP · <span data-year></span></span>
       <span>원본은 유지합니다. 정리는 복사로만.</span>
     </footer>
   </div>
-
   <div class="toast" role="status" aria-live="polite"></div>
   <div class="modal" hidden data-modal>
     <div class="modal__backdrop" data-modal-close></div>
@@ -146,7 +76,6 @@
       <button class="btn btn--start" type="button" data-modal-close>확인</button>
     </div>
   </div>
-  <script src="js/engine.js"></script>
-  <script src="js/main.js"></script>
+  <script type="module" src="/src/app/main.js"></script>
 </body>
 </html>

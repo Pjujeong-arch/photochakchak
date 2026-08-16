@@ -3,7 +3,9 @@ const fs = require("fs");
 const path = require("path");
 
 const PORT = Number(process.env.PORT) || 4173;
-const ROOT = path.join(__dirname, "..", "public");
+const PUBLIC_ROOT = path.join(__dirname, "..", "public");
+const SRC_ROOT = __dirname;
+const WEB_SRC = new Set(["app", "components", "hooks", "services", "lib", "types"]);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -28,8 +30,22 @@ function safeJoin(root, urlPath) {
   return target;
 }
 
+function resolveRequest(url) {
+  const decoded = decodeURIComponent((url || "/").split("?")[0]);
+  if (decoded === "/" || decoded === "") {
+    return safeJoin(PUBLIC_ROOT, "/index.html");
+  }
+  if (decoded === "/src" || decoded.startsWith("/src/")) {
+    const rel = decoded.slice("/src".length).replace(/^[/\\]+/, "").replace(/\\/g, "/");
+    const top = rel.split("/")[0];
+    if (!WEB_SRC.has(top) || path.extname(rel).toLowerCase() !== ".js") return null;
+    return safeJoin(SRC_ROOT, "/" + rel);
+  }
+  return safeJoin(PUBLIC_ROOT, decoded);
+}
+
 const server = http.createServer((req, res) => {
-  let filePath = safeJoin(ROOT, req.url === "/" ? "/index.html" : req.url);
+  const filePath = resolveRequest(req.url);
   if (!filePath) {
     res.writeHead(403);
     res.end("Forbidden");
