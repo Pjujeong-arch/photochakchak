@@ -36,7 +36,7 @@ function holdCopyAwake() {
       release() {
         try {
           child.kill();
-        } catch (_err) {
+        } catch {
           /* ignore */
         }
       },
@@ -52,7 +52,7 @@ function holdCopyAwake() {
     release() {
       try {
         child.kill();
-      } catch (_err) {
+      } catch {
         /* ignore */
       }
     },

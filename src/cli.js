@@ -46,7 +46,7 @@ async function walkFiles(root) {
     let entries;
     try {
       entries = await fsp.readdir(dir, { withFileTypes: true });
-    } catch (_err) {
+    } catch {
       return;
     }
     for (const entry of entries) {
@@ -103,7 +103,7 @@ async function hashFile(filePath, size) {
       fs.createReadStream(filePath)
         .on("data", (chunk) => hash.update(chunk))
         .on("error", reject)
-        .on("end", resolve);
+        .on("end", () => resolve(undefined));
     });
     return `f:${hash.digest("hex")}`;
   }
@@ -159,7 +159,7 @@ async function preview(srcDir, flags) {
   const stats = { photo: 0, video: 0, other: 0, duplicate: 0, total: files.length };
   for (let i = 0; i < files.length; i += 1) {
     const file = files[i];
-    stats[fileKind(file.name)] += 1;
+    stats[/** @type {"photo"|"video"|"other"} */ (fileKind(file.name))] += 1;
     const result = await classifyFile(file, flags, seen, hashBySize);
     if (result.duplicate) {
       stats.duplicate += 1;
@@ -203,9 +203,9 @@ async function copyCmd(srcDir, destDir, flags) {
         const dest = path.join(dir, name);
         await fsp.copyFile(file.path, dest);
         copied.push(path.join(result.rel, name).replace(/\\/g, "/"));
-        stats[result.status] += 1;
+        stats[/** @type {"ok"|"estimated"|"unclassified"|"other"} */ (result.status)] += 1;
       }
-    } catch (_err) {
+    } catch {
       stats.error += 1;
     }
     if ((i + 1) % 20 === 0 || i === files.length - 1) {
@@ -236,7 +236,7 @@ async function undoCmd(destDir) {
     try {
       await fsp.unlink(full);
       deleted += 1;
-    } catch (_err) {
+    } catch {
       /* already gone */
     }
   }
@@ -264,7 +264,7 @@ async function main() {
       process.exit(1);
     }
   } catch (err) {
-    console.error(err.message || err);
+    console.error(err instanceof Error ? err.message : err);
     process.exit(1);
   }
 }
