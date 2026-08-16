@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import ctypes
 import hashlib
 import json
 import os
@@ -48,6 +49,23 @@ OTHER_DIR = "기타파일"
 MANIFEST_NAME = ".photochak_last_run.json"
 SKIP_NAMES = {MANIFEST_NAME.lower(), "thumbs.db", "desktop.ini"}
 HASH_CHUNK = 1024 * 1024
+ES_CONTINUOUS = 0x80000000
+ES_SYSTEM_REQUIRED = 0x00000001
+ES_DISPLAY_REQUIRED = 0x00000002
+ES_AWAYMODE_REQUIRED = 0x00000040
+
+
+def set_copy_awake(on: bool) -> None:
+    """복사 중 Windows 절전·화면 꺼짐을 막는다. 끝나면 해제한다."""
+    if sys.platform != "win32":
+        return
+    flags = ES_CONTINUOUS
+    if on:
+        flags |= ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_AWAYMODE_REQUIRED
+    try:
+        ctypes.windll.kernel32.SetThreadExecutionState(flags)
+    except Exception:
+        pass
 IMAGE_EXTENSIONS = {
     ".jpg",
     ".jpeg",
@@ -386,6 +404,7 @@ class SortWorker(threading.Thread):
         self.skip_duplicates = skip_duplicates
 
     def run(self) -> None:
+        set_copy_awake(True)
         try:
             files = list(iter_image_files(self.source))
             total = len(files)
@@ -427,6 +446,8 @@ class SortWorker(threading.Thread):
             self.event_queue.put(("done", stats))
         except Exception as exc:
             self.event_queue.put(("fatal", str(exc)))
+        finally:
+            set_copy_awake(False)
 
     def _process_one(
         self, src: Path, seen_hashes: Set[str]
