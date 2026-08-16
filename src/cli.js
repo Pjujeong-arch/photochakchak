@@ -10,6 +10,7 @@ const {
   targetRel,
   uniqueName,
 } = require("./lib/classify");
+const { holdCopyAwake } = require("./lib/stay-awake");
 
 function usage() {
   console.log(`포토착착 CLI — 원본은 유지하고 복사만 합니다.
@@ -22,15 +23,17 @@ function usage() {
 옵션:
   --no-fallback   EXIF 없으면 미분류
   --keep-dup      중복도 복사
+  --video-dup     영상·1GB도 중복 검사 (느림)
 `);
 }
 
 function parseArgs(argv) {
-  const flags = { fallback: true, skipDup: true };
+  const flags = { fallback: true, skipDup: true, videoDup: false };
   const rest = [];
   for (const arg of argv) {
     if (arg === "--no-fallback") flags.fallback = false;
     else if (arg === "--keep-dup") flags.skipDup = false;
+    else if (arg === "--video-dup") flags.videoDup = true;
     else if (arg === "--help" || arg === "-h") flags.help = true;
     else rest.push(arg);
   }
@@ -81,14 +84,44 @@ async function readHead(filePath) {
   }
 }
 
-function hashFile(filePath) {
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash("sha256");
-    fs.createReadStream(filePath)
-      .on("data", (chunk) => hash.update(chunk))
-      .on("error", reject)
-      .on("end", () => resolve(hash.digest("hex")));
-  });
+const SAMPLE_HASH_MIN = 32 * 1024 * 1024;
+const SAMPLE_HASH_CHUNK = 1024 * 1024;
+const SKIP_DUP_SIZE = 1024 * 1024 * 1024;
+
+function shouldHash(file, flags) {
+  if (!flags.skipDup) return false;
+  if (flags.videoDup) return true;
+  if (fileKind(file.name) === "video") return false;
+  if (file.size >= SKIP_DUP_SIZE) return false;
+  return true;
+}
+
+async function hashFile(filePath, size) {
+  const hash = crypto.createHash("sha256");
+  if (size <= SAMPLE_HASH_MIN) {
+    await new Promise((resolve, reject) => {
+      fs.createReadStream(filePath)
+        .on("data", (chunk) => hash.update(chunk))
+        .on("error", reject)
+        .on("end", resolve);
+    });
+    return `f:${hash.digest("hex")}`;
+  }
+  const fh = await fsp.open(filePath, "r");
+  try {
+    const headLen = Math.min(SAMPLE_HASH_CHUNK, size);
+    const head = Buffer.alloc(headLen);
+    await fh.read(head, 0, headLen, 0);
+    const tailLen = Math.min(SAMPLE_HASH_CHUNK, size);
+    const tail = Buffer.alloc(tailLen);
+    await fh.read(tail, 0, tailLen, Math.max(0, size - tailLen));
+    hash.update(head);
+    hash.update(tail);
+    hash.update(Buffer.from(String(size)));
+  } finally {
+    await fh.close();
+  }
+  return `s:${hash.digest("hex")}`;
 }
 
 function inside(parent, child) {
@@ -97,23 +130,25 @@ function inside(parent, child) {
 }
 
 async function classifyFile(file, flags, seen, hashBySize) {
-  let digest = null;
-  if (flags.skipDup) {
-    const bucket = hashBySize.get(file.size) || [];
-    for (const prev of bucket) {
-      digest = digest || (await hashFile(file.path));
-      if (digest === prev) return { duplicate: true };
+  let duplicate = false;
+  if (shouldHash(file, flags)) {
+    const slot = hashBySize.get(file.size);
+    if (!slot) {
+      hashBySize.set(file.size, { file, digest: "" });
+    } else {
+      if (!slot.digest) {
+        slot.digest = await hashFile(slot.file.path, slot.file.size);
+        seen.add(slot.digest);
+      }
+      const digest = await hashFile(file.path, file.size);
+      if (digest === slot.digest || seen.has(digest)) duplicate = true;
+      else seen.add(digest);
     }
-    digest = digest || (await hashFile(file.path));
-    if (seen.has(digest)) return { duplicate: true };
-    seen.add(digest);
-    bucket.push(digest);
-    hashBySize.set(file.size, bucket);
   }
   const head = await readHead(file.path);
   const guess = resolveDate(file.name, head, file.mtimeMs, flags.fallback);
   const { rel, status } = targetRel(guess, file.name);
-  return { duplicate: false, rel, status, guess, kind: fileKind(file.name) };
+  return { duplicate, rel, status, guess, kind: fileKind(file.name) };
 }
 
 async function preview(srcDir, flags) {
@@ -146,6 +181,8 @@ async function copyCmd(srcDir, destDir, flags) {
   if (inside(srcDir, destDir) || path.resolve(srcDir) === path.resolve(destDir)) {
     throw new Error("저장 폴더는 원본과 달라야 하고, 원본 바깥이어야 합니다.");
   }
+  const stayAwake = holdCopyAwake();
+  try {
   const files = await walkFiles(srcDir);
   const seen = new Set();
   const hashBySize = new Map();
@@ -185,6 +222,9 @@ async function copyCmd(srcDir, destDir, flags) {
   console.log(
     `EXIF ${stats.ok} · 추정 ${stats.estimated} · 미분류 ${stats.unclassified} · 기타 ${stats.other} · 중복스킵 ${stats.duplicate} · 실패 ${stats.error}`
   );
+  } finally {
+    stayAwake.release();
+  }
 }
 
 async function undoCmd(destDir) {
