@@ -17,6 +17,7 @@ import { doneSummary } from "../utils/index.js";
  *   wakeLock: { hold: () => Promise<void>, release: () => Promise<void> },
  *   setKeepAwake: (v: boolean) => void,
  *   onCopyStarted?: () => void,
+ *   onCopyFinished?: () => void,
  * }} args
  */
 export function useSort({
@@ -27,6 +28,7 @@ export function useSort({
   wakeLock,
   setKeepAwake,
   onCopyStarted,
+  onCopyFinished,
 }) {
   const [preview, setPreview] = useState(
     /** @type {import('../types/photochak').SortPreview | null} */ (null)
@@ -132,11 +134,18 @@ export function useSort({
       try {
         const { stats, skipped, blob } = await spec.run(startedAt);
         if (blob) {
+          const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
-          a.href = URL.createObjectURL(blob);
+          a.href = url;
           a.download = "포토착착_정리본.zip";
+          a.rel = "noopener";
+          a.style.display = "none";
+          document.body.appendChild(a);
           a.click();
-          URL.revokeObjectURL(a.href);
+          window.setTimeout(() => {
+            a.remove();
+            URL.revokeObjectURL(url);
+          }, 60000);
         }
         const summary = doneSummary(stats);
         progress.setStatus(summary);
@@ -149,6 +158,7 @@ export function useSort({
             skipped || []
           ),
         });
+        spec.onFinished?.();
       } catch {
         progress.setStatus("오류로 중단 — 원본 유지");
       } finally {
@@ -169,12 +179,13 @@ export function useSort({
       title: "분류 결과",
       tipKind: "folder",
       onStarted: onCopyStarted,
+      onFinished: onCopyFinished,
       run: (startedAt) =>
         copyToDirectory(files, destHandle, buildOptions(), (done, total, _msg, extra) =>
           onTick(startedAt, done, total, extra)
         ),
     });
-  }, [runJob, files, destHandle, buildOptions, onTick, onCopyStarted]);
+  }, [runJob, files, destHandle, buildOptions, onTick, onCopyStarted, onCopyFinished]);
 
   const runZip = useCallback(() => {
     runJob({
@@ -182,12 +193,14 @@ export function useSort({
       startText: "ZIP 시작 · 절전 방지 · 남은 시간 계산 중…",
       title: "ZIP 결과",
       tipKind: "zip",
+      onStarted: onCopyStarted,
+      onFinished: onCopyFinished,
       run: (startedAt) =>
         copyToZip(files, buildOptions(), (done, total, _msg, extra) =>
           onTick(startedAt, done, total, extra)
         ),
     });
-  }, [runJob, files, buildOptions, onTick]);
+  }, [runJob, files, buildOptions, onTick, onCopyStarted, onCopyFinished]);
 
   const runUndo = useCallback(async () => {
     if (running.current) return;

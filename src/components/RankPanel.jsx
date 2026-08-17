@@ -46,7 +46,7 @@ export function RankPanel({
     <div className={`rank-box${loading ? " is-loading" : ""}`}>
       <p className="rank-box__lead">
         구글 로그인 후 샘플(인물 3·풍경 3)을 볼 수 있어요. 베스트 10은 구독에서
-        열려요.
+        열리고, 최대 20장 시연입니다.
       </p>
       <p className="rank-box__note">
         축소 이미지만 구글 AI로 보내. 원본 파일은 서버에 저장하지 않아 왈.
@@ -111,7 +111,7 @@ export function RankPanel({
           disabled={loading}
           onClick={onTop10}
         >
-          {loading ? "분석 중…" : "베스트 10 우선순위"}
+          {loading ? "분석 중…" : "베스트 10 (최대 20장 시연)"}
         </button>
       </div>
       {loading ? (
