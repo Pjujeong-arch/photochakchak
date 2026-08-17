@@ -44,6 +44,10 @@ export default function App() {
   const openLoginModal = useCallback(() => {
     if (!meRef.current?.email) setLoginOpen(true);
   }, []);
+  const toastLoginLater = useCallback(() => {
+    if (meRef.current?.email) return;
+    toast.show("분류는 그대로 진행됩니다. 추천은 끝난 뒤 결과 창에서 로그인하면 돼요.");
+  }, [toast]);
   const closeLoginModal = useCallback(() => setLoginOpen(false), []);
   const openOffer = useCallback(() => setOfferOpen(true), []);
   const closeOffer = useCallback(() => setOfferOpen(false), []);
@@ -66,7 +70,7 @@ export default function App() {
     progress,
     wakeLock,
     setKeepAwake,
-    onCopyStarted: openLoginModal,
+    onCopyStarted: toastLoginLater,
   });
   const rank = useRank({
     files: folders.files,
@@ -124,7 +128,7 @@ export default function App() {
                 />
                 <FolderPickButton
                   variant="dest"
-                  label="[2] 정리본 저장 폴더 (원본과 다른 위치, 연도월·미분류·기타파일)"
+                  label="[2] 정리본 저장 — 폴더 만들기 (원본과 다른 위치)"
                   name={folders.destPick.name}
                   meta={folders.destPick.meta}
                   picked={folders.destPick.picked}
@@ -208,8 +212,7 @@ export default function App() {
         layer="top"
       >
         <p className="login-modal__hint">
-          자동 분류는 그대로 진행됩니다. 이 창에서 로그인해도 복사 작업은
-          멈추지 않습니다.
+          샘플·베스트 추천을 쓰려면 구글 계정으로 로그인해 주세요.
         </p>
         {me?.email ? (
           <p className="login-modal__ok">{me.email}</p>
@@ -249,6 +252,7 @@ export default function App() {
               rank.closeGallery();
               openOffer();
             }}
+            onCopyToFolder={rank.copyPicks}
           />
         ) : null}
       </Modal>
