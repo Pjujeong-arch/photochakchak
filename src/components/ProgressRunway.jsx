@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { FlowBar } from "./FlowBar.jsx";
 
 /**
  * @param {{
@@ -85,7 +86,7 @@ export function ProgressRunway({
           <img ref={nextRef} className="pome__shot" alt="" />
         </div>
       </div>
-      <progress id="progress" max={100} value={pct} />
+      <FlowBar pct={pct} busy={busy} done={donePose && !busy} />
       <p>{status}</p>
     </div>
   );
