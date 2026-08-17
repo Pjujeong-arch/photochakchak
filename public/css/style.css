@@ -1799,37 +1799,24 @@ a {
   outline-offset: 2px;
 }
 
-.login-modal__actions .sub-bar,
-.login-modal__actions .sub-bar__row {
-  display: contents;
+.login-modal__actions .sub-bar {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
 .login-modal__actions .sub-bar__gis {
   box-sizing: border-box;
-  position: relative;
   width: var(--login-w);
-  height: var(--login-h);
   min-width: var(--login-w);
   min-height: var(--login-h);
-  overflow: hidden;
-  border-radius: calc(var(--login-h) / 2);
-  line-height: 0;
-}
-
-.login-modal__actions .sub-bar__gis > div {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 220px;
-  height: 40px;
-  transform: translate(-50%, -50%) scale(1.1);
-  transform-origin: center center;
-}
-
-.login-modal__actions .sub-bar__gis iframe {
-  margin: 0 !important;
-  width: 220px !important;
-  height: 40px !important;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible;
+  line-height: normal;
 }
 
 .login-modal__actions .sub-bar .btn {

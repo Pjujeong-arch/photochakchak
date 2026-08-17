@@ -265,6 +265,7 @@ export default function App() {
             btnRef={subscribe.btnRef}
             showLogout={Boolean(me?.email)}
             onLogout={subscribe.logout}
+            onPaint={mountButton}
             loading={subscribe.loading}
             authLoading={subscribe.authLoading}
             error={subscribe.error}

@@ -12,6 +12,15 @@ function gis() {
   return window.google?.accounts?.id;
 }
 
+function fedcmButtonOk() {
+  if (!("IdentityCredential" in window)) return false;
+  const ua = navigator.userAgent || "";
+  if (/Edg|OPR|Opera|SamsungBrowser|YaBrowser/i.test(ua)) return false;
+  const android = /Android/i.test(ua);
+  const ver = Number((ua.match(/Chrome\/(\d+)/) || [])[1] || 0);
+  return android ? ver >= 128 : ver >= 125;
+}
+
 /**
  * @param {{ show: (msg: string) => void }} toast
  */
@@ -25,6 +34,9 @@ export function useSubscribe(toast) {
   const [authLoading, setAuthLoading] = useState(false);
   const [error, setError] = useState(/** @type {string | null} */ (null));
   const btnRef = useRef(/** @type {HTMLSpanElement | null} */ (null));
+  const inited = useRef("");
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
 
   const refresh = useCallback(async () => {
     try {
@@ -38,39 +50,60 @@ export function useSubscribe(toast) {
     }
   }, []);
 
-  const renderButton = useCallback(() => {
+  const paintButton = useCallback(() => {
     const g = gis();
     const el = btnRef.current;
-    if (!g || !clientId || !el) return;
-    el.innerHTML = "";
-    if (me?.email) return;
-    g.initialize({
-      client_id: clientId,
-      callback: (res) => {
-        setAuthLoading(true);
-        setError(null);
-        loginWithGoogleCredential(res.credential)
-          .then((user) => {
-            setMe(user);
-            toast.show("구글 로그인되었습니다.");
-          })
-          .catch((err) => {
-            const msg = toErrorMessage(err, "구글 로그인에 실패했습니다.");
-            setError(msg);
-            toast.show(msg);
-          })
-          .finally(() => setAuthLoading(false));
-      },
-    });
-    g.renderButton(el, {
-      theme: "outline",
-      size: "large",
-      text: "signin_with",
-      shape: "pill",
-      width: 220,
-      logo_alignment: "left",
-    });
-  }, [clientId, me, toast]);
+    if (!g || !clientId || !el || el.hidden) return false;
+    try {
+      if (inited.current !== clientId) {
+        g.initialize({
+          client_id: clientId,
+          callback: (res) => {
+            setAuthLoading(true);
+            setError(null);
+            loginWithGoogleCredential(res.credential)
+              .then((user) => {
+                setMe(user);
+                toastRef.current.show("구글 로그인되었습니다.");
+              })
+              .catch((err) => {
+                const msg = toErrorMessage(err, "구글 로그인에 실패했습니다.");
+                setError(msg);
+                toastRef.current.show(msg);
+              })
+              .finally(() => setAuthLoading(false));
+          },
+          ...(fedcmButtonOk() ? { use_fedcm_for_button: true } : {}),
+        });
+        inited.current = clientId;
+      }
+      el.replaceChildren();
+      g.renderButton(el, {
+        theme: "outline",
+        size: "large",
+        type: "standard",
+        text: "signin_with",
+        shape: "pill",
+        width: 240,
+        logo_alignment: "left",
+        locale: "ko",
+      });
+    } catch {
+      return false;
+    }
+    return Boolean(el.querySelector("iframe, button, [role='button']"));
+  }, [clientId]);
+
+  const mountButton = useCallback(() => {
+    if (!clientId) return;
+    let n = 0;
+    const tick = () => {
+      n += 1;
+      if (paintButton() || n > 25) return;
+      window.setTimeout(tick, 80);
+    };
+    window.requestAnimationFrame(tick);
+  }, [clientId, paintButton]);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,22 +140,19 @@ export function useSubscribe(toast) {
     let n = 0;
     const wait = window.setInterval(() => {
       n += 1;
-      if (gis() || n > 40) {
+      if (paintButton()) {
         window.clearInterval(wait);
-        if (!gis()) {
-          setError("Google 로그인 스크립트를 불러오지 못했습니다.");
-          return;
-        }
-        renderButton();
+        return;
       }
-    }, 200);
+      if (n > 40 && !gis()) {
+        window.clearInterval(wait);
+        setError("Google 로그인 스크립트를 불러오지 못했습니다.");
+      } else if (n > 50) {
+        window.clearInterval(wait);
+      }
+    }, 100);
     return () => window.clearInterval(wait);
-  }, [ready, loading, clientId, me, renderButton]);
-
-  const mountButton = useCallback(() => {
-    if (!clientId || me?.email) return;
-    window.requestAnimationFrame(() => renderButton());
-  }, [clientId, me, renderButton]);
+  }, [ready, loading, clientId, me, paintButton]);
 
   const logout = useCallback(async () => {
     setAuthLoading(true);
