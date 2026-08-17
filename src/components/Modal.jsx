@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 
 /**
  * @param {{
@@ -6,9 +6,20 @@ import { useEffect } from "react";
  *   title: string,
  *   onClose: () => void,
  *   children: import('react').ReactNode,
+ *   closeLabel?: string | null,
+ *   layer?: "base" | "top",
  * }} props
  */
-export function Modal({ open, title, onClose, children }) {
+export function Modal({
+  open,
+  title,
+  onClose,
+  children,
+  closeLabel = "확인",
+  layer = "base",
+}) {
+  const titleId = useId();
+
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (event) => {
@@ -21,21 +32,23 @@ export function Modal({ open, title, onClose, children }) {
   if (!open) return null;
 
   return (
-    <div className="modal">
+    <div className={`modal${layer === "top" ? " modal--top" : ""}`}>
       <div className="modal__backdrop" onClick={onClose} />
       <div
         className="modal__card"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={titleId}
       >
-        <h2 className="modal__title" id="modal-title">
+        <h2 className="modal__title" id={titleId}>
           {title}
         </h2>
         <div className="modal__body">{children}</div>
-        <button className="btn btn--start" type="button" onClick={onClose}>
-          확인
-        </button>
+        {closeLabel ? (
+          <button className="btn btn--start" type="button" onClick={onClose}>
+            {closeLabel}
+          </button>
+        ) : null}
       </div>
     </div>
   );

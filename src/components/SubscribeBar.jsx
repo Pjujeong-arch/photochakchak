@@ -1,6 +1,5 @@
 /**
  * @param {{
- *   label: string,
  *   btnRef: import('react').RefObject<HTMLSpanElement | null>,
  *   showLogout: boolean,
  *   onLogout: () => void,
@@ -10,7 +9,6 @@
  * }} props
  */
 export function SubscribeBar({
-  label,
   btnRef,
   showLogout,
   onLogout,
@@ -23,16 +21,17 @@ export function SubscribeBar({
   return (
     <div className={`sub-bar${busy ? " is-loading" : ""}${error ? " has-error" : ""}`}>
       <div className="sub-bar__row">
-        <span className="sub-bar__label">
-          {busy ? <span className="sub-bar__spinner" aria-hidden="true" /> : null}
-          {label}
-        </span>
-        <span ref={btnRef} hidden={showLogout || busy} />
+        {busy ? <span className="sub-bar__spinner" aria-hidden="true" /> : null}
+        <span
+          className="sub-bar__gis"
+          ref={btnRef}
+          hidden={showLogout || authLoading}
+        />
         {showLogout ? (
           <button
             className="btn btn--ghost"
             type="button"
-            disabled={busy}
+            disabled={authLoading}
             onClick={onLogout}
           >
             {authLoading ? "처리 중…" : "로그아웃"}

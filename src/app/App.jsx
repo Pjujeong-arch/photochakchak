@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActionBar,
   FolderPickButton,
@@ -29,11 +29,18 @@ export default function App() {
   const folders = useFolders(toast);
   const progress = useProgress();
   const [keepAwake, setKeepAwake] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const wakeLock = useWakeLock({
     running: progress.busy,
     keepAwake,
   });
   const subscribe = useSubscribe(toast);
+  const meRef = useRef(subscribe.me);
+  meRef.current = subscribe.me;
+  const openLoginModal = useCallback(() => {
+    if (!meRef.current?.email) setLoginOpen(true);
+  }, []);
+  const closeLoginModal = useCallback(() => setLoginOpen(false), []);
   const {
     preview,
     clearPreview,
@@ -53,6 +60,7 @@ export default function App() {
     progress,
     wakeLock,
     setKeepAwake,
+    onCopyStarted: openLoginModal,
   });
   const rank = useRank({
     files: folders.files,
@@ -65,6 +73,17 @@ export default function App() {
     clearPreview();
   }, [folders.files, folders.destHandle, clearPreview]);
 
+  useEffect(() => {
+    if (!loginOpen) return undefined;
+    subscribe.mountButton();
+    return undefined;
+  }, [loginOpen, subscribe.me, subscribe.clientId, subscribe.mountButton]);
+
+  useEffect(() => {
+    if (!loginOpen || !subscribe.me?.email || subscribe.authLoading) return;
+    setLoginOpen(false);
+  }, [loginOpen, subscribe.me, subscribe.authLoading]);
+
   const modalOpen = modal.kind !== "none";
   const modalTitle = modal.kind === "none" ? "" : modal.title;
 
@@ -76,15 +95,6 @@ export default function App() {
           <section className="section section--app" id="app">
             <h1 className="app-title">사진·영상 정리</h1>
             <div className="app-panel">
-              <SubscribeBar
-                label={subscribe.label}
-                btnRef={subscribe.btnRef}
-                showLogout={Boolean(subscribe.me?.email)}
-                onLogout={subscribe.logout}
-                loading={subscribe.loading}
-                authLoading={subscribe.authLoading}
-                error={subscribe.error}
-              />
               <div className="folder-picks">
                 <FolderPickButton
                   variant="source"
@@ -135,6 +145,7 @@ export default function App() {
                 act={progress.act}
                 say={progress.say}
                 actUrl={progress.actUrl}
+                suppressed={modalOpen}
               />
             </div>
           </section>
@@ -175,6 +186,38 @@ export default function App() {
             <SkippedList items={modal.skipped} />
           </>
         ) : null}
+      </Modal>
+      <Modal
+        open={loginOpen}
+        title="구글 로그인"
+        onClose={closeLoginModal}
+        closeLabel={null}
+        layer="top"
+      >
+        <p className="login-modal__hint">
+          자동 분류는 그대로 진행됩니다. 이 창에서 로그인해도 복사 작업은
+          멈추지 않습니다.
+        </p>
+        {subscribe.me?.email ? (
+          <p className="login-modal__ok">{subscribe.me.email}</p>
+        ) : null}
+        <div className="login-modal__actions">
+          <button
+            className="btn login-modal__later"
+            type="button"
+            onClick={closeLoginModal}
+          >
+            나중에
+          </button>
+          <SubscribeBar
+            btnRef={subscribe.btnRef}
+            showLogout={Boolean(subscribe.me?.email)}
+            onLogout={subscribe.logout}
+            loading={subscribe.loading}
+            authLoading={subscribe.authLoading}
+            error={subscribe.error}
+          />
+        </div>
       </Modal>
     </>
   );

@@ -16,6 +16,7 @@ import { doneSummary } from "../utils/index.js";
  *   progress: ReturnType<typeof import('./useProgress.js').useProgress>,
  *   wakeLock: { hold: () => Promise<void>, release: () => Promise<void> },
  *   setKeepAwake: (v: boolean) => void,
+ *   onCopyStarted?: () => void,
  * }} args
  */
 export function useSort({
@@ -25,6 +26,7 @@ export function useSort({
   progress,
   wakeLock,
   setKeepAwake,
+  onCopyStarted,
 }) {
   const [preview, setPreview] = useState(
     /** @type {import('../types/photochak').SortPreview | null} */ (null)
@@ -92,7 +94,7 @@ export function useSort({
       );
     } finally {
       running.current = false;
-      progress.setRunning(false);
+      progress.setRunning(false, { celebrate: false });
     }
   }, [files, toast, progress, buildOptions, onTick]);
 
@@ -119,6 +121,7 @@ export function useSort({
         return toast.show("저장 폴더를 선택하거나 ZIP으로 받으세요.");
       }
       if (!confirmCopy(spec.confirmLabel)) return;
+      spec.onStarted?.();
       cancelled.current = false;
       running.current = true;
       progress.setRunning(true);
@@ -165,12 +168,13 @@ export function useSort({
       startText: "분류 시작 · 절전 방지 · 남은 시간 계산 중…",
       title: "분류 결과",
       tipKind: "folder",
+      onStarted: onCopyStarted,
       run: (startedAt) =>
         copyToDirectory(files, destHandle, buildOptions(), (done, total, _msg, extra) =>
           onTick(startedAt, done, total, extra)
         ),
     });
-  }, [runJob, files, destHandle, buildOptions, onTick]);
+  }, [runJob, files, destHandle, buildOptions, onTick, onCopyStarted]);
 
   const runZip = useCallback(() => {
     runJob({

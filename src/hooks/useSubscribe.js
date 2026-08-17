@@ -51,7 +51,7 @@ export function useSubscribe(toast) {
         loginWithGoogleCredential(res.credential)
           .then((user) => {
             setMe(user);
-            toast.show("구글 로그인 · 구독안이 켜졌습니다.");
+            toast.show("구글 로그인되었습니다.");
           })
           .catch((err) => {
             const msg = toErrorMessage(err, "구글 로그인에 실패했습니다.");
@@ -63,9 +63,11 @@ export function useSubscribe(toast) {
     });
     g.renderButton(el, {
       theme: "outline",
-      size: "medium",
+      size: "large",
       text: "signin_with",
-      width: 220,
+      shape: "pill",
+      width: 180,
+      logo_alignment: "left",
     });
   }, [clientId, me, toast]);
 
@@ -116,6 +118,12 @@ export function useSubscribe(toast) {
     return () => window.clearInterval(wait);
   }, [ready, loading, clientId, me, renderButton]);
 
+  /** Call when the login button host mounts (e.g. modal opens). */
+  const mountButton = useCallback(() => {
+    if (!clientId || me?.email) return;
+    window.requestAnimationFrame(() => renderButton());
+  }, [clientId, me, renderButton]);
+
   const logout = useCallback(async () => {
     setAuthLoading(true);
     setError(null);
@@ -132,24 +140,12 @@ export function useSubscribe(toast) {
     }
   }, [toast]);
 
-  const label = loading
-    ? "구독안 · 로그인 상태 확인 중…"
-    : authLoading
-      ? "구독안 · 처리 중…"
-      : !clientId && !me
-        ? "구독안 · .env.local에 GOOGLE_CLIENT_ID가 필요합니다"
-        : me?.email
-          ? me.subscribed
-            ? `구독 중 · ${me.email}`
-            : me.email
-          : "구독안 · 구글 로그인 후 베스트 추천";
-
   return {
     me,
-    label,
     btnRef,
     logout,
     renderButton,
+    mountButton,
     clientId,
     loading,
     authLoading,
