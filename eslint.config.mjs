@@ -57,6 +57,7 @@ export default [
       "src/lib/classify.js",
       "src/lib/stay-awake.js",
       "src/api/**/*.js",
+      "api/**/*.js",
       "scripts/**/*.js",
     ],
     ...js.configs.recommended,

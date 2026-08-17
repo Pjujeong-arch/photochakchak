@@ -1,11 +1,23 @@
 async function readJson(req, maxBytes) {
+  if (req.body != null) {
+    if (typeof req.body === "string") {
+      if (!req.body) return {};
+      try {
+        return JSON.parse(req.body);
+      } catch {
+        throw new Error("invalid_json");
+      }
+    }
+    if (typeof req.body === "object" && !Buffer.isBuffer(req.body)) {
+      return req.body;
+    }
+  }
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
     if (size > maxBytes) {
-      const err = new Error("payload_too_large");
-      throw err;
+      throw new Error("payload_too_large");
     }
     chunks.push(chunk);
   }

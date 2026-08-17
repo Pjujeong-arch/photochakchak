@@ -49,8 +49,12 @@ export async function requestJson<T = unknown>(
   };
 
   if (!res.ok) {
+    const fallback =
+      res.status === 404
+        ? "로그인 API(/api)가 없습니다. 로컬은 npm run dev, 배포는 Vercel 함수와 GOOGLE_CLIENT_ID가 필요합니다."
+        : `요청 실패 (${res.status})`;
     throw new ApiError(
-      typeof data.error === "string" ? data.error : `요청 실패 (${res.status})`,
+      typeof data.error === "string" ? data.error : fallback,
       res.status,
       data
     );

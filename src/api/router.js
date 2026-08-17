@@ -52,12 +52,17 @@ async function handleApi(req, res) {
   }
 
   if (method === "POST" && path === "/api/subscribe") {
-    const sess = activateSubscribe(req);
-    if (!sess) {
+    const next = activateSubscribe(req);
+    if (!next) {
       sendJson(res, 401, { error: "구글 로그인이 필요합니다." });
       return true;
     }
-    sendJson(res, 200, { email: sess.email, subscribed: true });
+    sendJson(
+      res,
+      200,
+      { email: next.user.email, subscribed: true },
+      { "Set-Cookie": cookieHeader(next.sid, false) }
+    );
     return true;
   }
 
@@ -100,7 +105,7 @@ async function handleApi(req, res) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "rank_failed";
       if (msg === "missing_gemini_key") {
-        sendJson(res, 503, { error: "GEMINI_API_KEY가 .env.local에 없습니다." });
+        sendJson(res, 503, { error: "서버에 GEMINI_API_KEY가 없습니다. 로컬은 .env.local, 배포는 Vercel Environment Variables에 넣으세요." });
       } else if (msg === "payload_too_large" || msg === "invalid_json" || msg === "images_range" || msg === "mime" || msg === "data") {
         sendJson(res, 400, { error: "보낸 사진 데이터가 올바르지 않습니다." });
       } else {
