@@ -8,6 +8,7 @@ import {
   ProgressRunway,
   RankGallery,
   RankPanel,
+  RankWaitReel,
   Reel,
   SiteFooter,
   SkippedList,
@@ -132,7 +133,7 @@ export default function App() {
                   name={folders.destPick.name}
                   meta={folders.destPick.meta}
                   picked={folders.destPick.picked}
-                  disabled={progress.busy || !folders.dirSupported}
+                  disabled={progress.busy}
                   onClick={folders.pickDest}
                 />
               </div>
@@ -157,7 +158,13 @@ export default function App() {
                 act={progress.act}
                 say={progress.say}
                 actUrl={progress.actUrl}
-                suppressed={modalOpen || loginOpen || offerOpen || Boolean(rank.gallery)}
+                suppressed={
+                  modalOpen ||
+                  loginOpen ||
+                  offerOpen ||
+                  Boolean(rank.gallery) ||
+                  rank.loading
+                }
               />
             </div>
           </section>
@@ -234,6 +241,15 @@ export default function App() {
             error={subscribe.error}
           />
         </div>
+      </Modal>
+      <Modal
+        open={rank.loading}
+        title="포메가 사진을 보는 중"
+        onClose={() => {}}
+        closeLabel={null}
+        layer="top"
+      >
+        <RankWaitReel status={rank.status} />
       </Modal>
       <Modal
         open={Boolean(rank.gallery && rank.result)}

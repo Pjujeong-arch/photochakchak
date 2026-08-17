@@ -2159,9 +2159,52 @@ a {
   }
 }
 
+.rank-wait {
+  margin: 0 0 4px;
+}
+
+.rank-wait__stage {
+  overflow: hidden;
+  border-radius: 20px;
+  background: #fff6ee;
+  border: 1px solid var(--line);
+  padding: 18px 0;
+}
+
+.rank-wait__roll {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  animation: rank-wait-roll 16s linear infinite;
+}
+
+.rank-wait__roll img {
+  display: block;
+  height: 148px;
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.rank-wait__status {
+  margin: 14px 0 0;
+  text-align: center;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+@keyframes rank-wait-roll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .rank-wait__roll {
+    animation: none;
   }
 
   .btn--safe,

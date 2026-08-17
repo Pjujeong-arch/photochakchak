@@ -96,7 +96,7 @@ export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscrib
       const chosen = pickSpread(photos, cap);
       setLoading(true);
       setError(null);
-      setStatus(`축소본 ${chosen.length}장을 Gemini에 보내는 중…`);
+        setStatus(`축소본 ${chosen.length}장을 Gemini에서 읽는 중…`);
       try {
         const images = [];
         for (let i = 0; i < chosen.length; i += 1) {
