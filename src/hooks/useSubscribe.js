@@ -4,6 +4,7 @@ import {
   fetchSession,
   loginWithGoogleCredential,
   logoutSession,
+  activateSubscribe,
   toErrorMessage,
 } from "../services/index.js";
 
@@ -66,7 +67,7 @@ export function useSubscribe(toast) {
       size: "large",
       text: "signin_with",
       shape: "pill",
-      width: 180,
+      width: 220,
       logo_alignment: "left",
     });
   }, [clientId, me, toast]);
@@ -140,10 +141,29 @@ export function useSubscribe(toast) {
     }
   }, [toast]);
 
+  const startPlan = useCallback(async () => {
+    setAuthLoading(true);
+    setError(null);
+    try {
+      const user = await activateSubscribe();
+      setMe(user);
+      toast.show("구독이 켜졌습니다. 베스트 10을 이용할 수 있어요.");
+      return user;
+    } catch (err) {
+      const msg = toErrorMessage(err, "구독에 실패했습니다.");
+      setError(msg);
+      toast.show(msg);
+      return null;
+    } finally {
+      setAuthLoading(false);
+    }
+  }, [toast]);
+
   return {
     me,
     btnRef,
     logout,
+    startPlan,
     renderButton,
     mountButton,
     clientId,

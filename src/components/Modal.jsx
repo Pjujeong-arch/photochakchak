@@ -8,6 +8,7 @@ import { useEffect, useId } from "react";
  *   children: import('react').ReactNode,
  *   closeLabel?: string | null,
  *   layer?: "base" | "top",
+ *   size?: "base" | "wide",
  * }} props
  */
 export function Modal({
@@ -17,6 +18,7 @@ export function Modal({
   children,
   closeLabel = "확인",
   layer = "base",
+  size = "base",
 }) {
   const titleId = useId();
 
@@ -32,7 +34,9 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div className={`modal${layer === "top" ? " modal--top" : ""}`}>
+    <div
+      className={`modal${layer === "top" ? " modal--top" : ""}${size === "wide" ? " modal--wide" : ""}`}
+    >
       <div className="modal__backdrop" onClick={onClose} />
       <div
         className="modal__card"

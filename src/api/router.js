@@ -1,5 +1,5 @@
 const { readJson, sendJson, ymd, monthKey } = require("./http");
-const { getSession, createSession, clearSession, cookieHeader } = require("./session");
+const { getSession, createSession, activateSubscribe, clearSession, cookieHeader } = require("./session");
 const { verifyGoogleCredential } = require("./google-auth");
 const { rankWithGemini } = require("./gemini-rank");
 
@@ -38,7 +38,7 @@ async function handleApi(req, res) {
       const body = await readJson(req, 8000);
       const user = await verifyGoogleCredential(body.credential, clientId);
       const sid = createSession(user);
-      sendJson(res, 200, { email: user.email, subscribed: true }, { "Set-Cookie": cookieHeader(sid, false) });
+      sendJson(res, 200, { email: user.email, subscribed: false }, { "Set-Cookie": cookieHeader(sid, false) });
     } catch {
       sendJson(res, 401, { error: "구글 로그인 검증에 실패했습니다." });
     }
@@ -51,10 +51,26 @@ async function handleApi(req, res) {
     return true;
   }
 
+  if (method === "POST" && path === "/api/subscribe") {
+    const sess = activateSubscribe(req);
+    if (!sess) {
+      sendJson(res, 401, { error: "구글 로그인이 필요합니다." });
+      return true;
+    }
+    sendJson(res, 200, { email: sess.email, subscribed: true });
+    return true;
+  }
+
   if (method === "POST" && path === "/api/rank") {
     const sess = getSession(req);
-    if (!sess || !sess.subscribed) {
-      sendJson(res, 401, { error: "구글 로그인(구독안)이 필요합니다." });
+    if (!sess) {
+      sendJson(res, 401, { error: "구글 로그인이 필요합니다." });
+      return true;
+    }
+    const bodyPeek = await readJson(req, 6 * 1024 * 1024);
+    const mode = bodyPeek.mode === "top10" ? "top10" : "sample";
+    if (mode === "top10" && !sess.subscribed) {
+      sendJson(res, 402, { error: "베스트 10은 구독 후 이용할 수 있습니다." });
       return true;
     }
     const now = Date.now();
@@ -65,8 +81,7 @@ async function handleApi(req, res) {
     }
     lastCall.set(sess.sub, now);
     try {
-      const body = await readJson(req, 6 * 1024 * 1024);
-      const mode = body.mode === "top10" ? "top10" : "sample";
+      const body = bodyPeek;
       const folder = String(body.folder || "");
       const from = String(body.from || "");
       const to = String(body.to || "");

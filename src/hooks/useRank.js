@@ -3,6 +3,7 @@ import {
   fileToThumb,
   isPhotoFile,
   requestRank,
+  ApiError,
   toErrorMessage,
 } from "../services/index.js";
 import { monthOf, pickSpread } from "../utils/index.js";
@@ -13,9 +14,11 @@ import { monthOf, pickSpread } from "../utils/index.js";
  *   preview: import('../types/photochak').SortPreview | null,
  *   me: import('../types/photochak').SubscribeUser | null,
  *   toast: { show: (msg: string) => void },
+ *   onNeedLogin?: () => void,
+ *   onNeedSubscribe?: () => void,
  * }} args
  */
-export function useRank({ files, preview, me, toast }) {
+export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscribe }) {
   const [folder, setFolder] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -25,6 +28,9 @@ export function useRank({ files, preview, me, toast }) {
   const [error, setError] = useState(/** @type {string | null} */ (null));
   const [result, setResult] = useState(
     /** @type {import('../types/photochak').RankResult | null} */ (null)
+  );
+  const [gallery, setGallery] = useState(
+    /** @type {"sample" | "top10" | null} */ (null)
   );
 
   const months = useMemo(() => {
@@ -59,9 +65,17 @@ export function useRank({ files, preview, me, toast }) {
     async (mode) => {
       if (loading) return;
       if (!me?.email) {
-        const msg = "구글 로그인 후 구독안을 이용해 주세요.";
+        const msg = "구글 로그인 후 이용해 주세요.";
         setError(msg);
         toast.show(msg);
+        onNeedLogin?.();
+        return;
+      }
+      if (mode === "top10" && !me.subscribed) {
+        const msg = "베스트 10은 구독 후 이용할 수 있습니다.";
+        setError(msg);
+        toast.show(msg);
+        onNeedSubscribe?.();
         return;
       }
       if (!consent) {
@@ -114,17 +128,28 @@ export function useRank({ files, preview, me, toast }) {
         });
         setStatus("추천이 도착했습니다.");
         setResult(data);
+        setGallery(mode);
       } catch (err) {
         const msg = toErrorMessage(err, "추천 요청에 실패했습니다.");
         setError(msg);
         setStatus("");
         toast.show(msg);
+        if (err instanceof ApiError && err.status === 402) onNeedSubscribe?.();
       } finally {
         setLoading(false);
       }
     },
-    [loading, me, consent, filteredPhotos, folder, from, to, toast]
+    [loading, me, consent, filteredPhotos, folder, from, to, toast, onNeedLogin, onNeedSubscribe]
   );
+
+  const closeGallery = useCallback(() => setGallery(null), []);
+  const openSampleGallery = useCallback(() => {
+    if (result?.portraits?.length || result?.landscapes?.length) setGallery("sample");
+  }, [result]);
+  const openTop10Gallery = useCallback(() => {
+    if (result?.top10?.length) setGallery("top10");
+    else onNeedSubscribe?.();
+  }, [result, onNeedSubscribe]);
 
   return {
     folder,
@@ -139,6 +164,10 @@ export function useRank({ files, preview, me, toast }) {
     loading,
     error,
     result,
+    gallery,
+    closeGallery,
+    openSampleGallery,
+    openTop10Gallery,
     months,
     runSample: () => run("sample"),
     runTop10: () => run("top10"),

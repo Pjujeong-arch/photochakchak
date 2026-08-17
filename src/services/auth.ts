@@ -31,3 +31,8 @@ export function loginWithGoogleCredential(credential: string) {
 export function logoutSession() {
   return requestJson<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
 }
+
+/** Local/demo: mark the logged-in session as subscribed. Production should use a payment webhook. */
+export function activateSubscribe() {
+  return requestJson<AuthSession>("/api/subscribe", { method: "POST" });
+}

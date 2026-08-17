@@ -1,5 +1,3 @@
-import { RankResults } from "./RankResults.jsx";
-
 /**
  * @param {{
  *   months: string[],
@@ -18,6 +16,9 @@ import { RankResults } from "./RankResults.jsx";
  *   onConsent: (v: boolean) => void,
  *   onSample: () => void,
  *   onTop10: () => void,
+ *   onOpenSample: () => void,
+ *   onOpenTop10: () => void,
+ *   onOpenSubscribe: () => void,
  * }} props
  */
 export function RankPanel({
@@ -37,12 +38,15 @@ export function RankPanel({
   onConsent,
   onSample,
   onTop10,
+  onOpenSample,
+  onOpenTop10,
+  onOpenSubscribe,
 }) {
   return (
     <div className={`rank-box${loading ? " is-loading" : ""}`}>
       <p className="rank-box__lead">
-        구독(구글 로그인)하면 Gemini가 인물 3장·풍경 3장을 샘플로 고르고,
-        폴더·기간을 정해 베스트 10을 우선순위로 보여준다멍.
+        구글 로그인 후 샘플(인물 3·풍경 3)을 볼 수 있어요. 베스트 10은 구독에서
+        열려요.
       </p>
       <p className="rank-box__note">
         축소 이미지만 구글 AI로 보내. 원본 파일은 서버에 저장하지 않아 왈.
@@ -122,7 +126,21 @@ export function RankPanel({
           {error}
         </p>
       ) : null}
-      {result && !loading ? <RankResults result={result} /> : null}
+      <div className="rank-actions rank-actions--view">
+        {result ? (
+          <>
+            <button className="btn btn--ghost" type="button" onClick={onOpenSample}>
+              샘플 창 다시 보기
+            </button>
+            <button className="btn btn--ghost" type="button" onClick={onOpenTop10}>
+              베스트 10 창 다시 보기
+            </button>
+          </>
+        ) : null}
+        <button className="btn btn--ghost" type="button" onClick={onOpenSubscribe}>
+          구독 안내
+        </button>
+      </div>
     </div>
   );
 }

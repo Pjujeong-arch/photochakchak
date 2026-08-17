@@ -14,6 +14,7 @@ export {
   fetchSession,
   loginWithGoogleCredential,
   logoutSession,
+  activateSubscribe,
 } from "./auth";
 export { requestRank } from "./rank-api";
 

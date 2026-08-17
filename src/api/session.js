@@ -33,10 +33,18 @@ function createSession(user) {
   sessions.set(sid, {
     email: user.email,
     sub: user.sub,
-    subscribed: true,
+    subscribed: false,
     exp: Date.now() + TTL_MS,
   });
   return sid;
+}
+
+function activateSubscribe(req) {
+  const row = getSession(req);
+  if (!row) return null;
+  row.subscribed = true;
+  row.exp = Date.now() + TTL_MS;
+  return row;
 }
 
 function clearSession(req) {
@@ -49,4 +57,4 @@ function cookieHeader(sid, clear) {
   return `${COOKIE}=${sid}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(TTL_MS / 1000)}`;
 }
 
-module.exports = { getSession, createSession, clearSession, cookieHeader };
+module.exports = { getSession, createSession, activateSubscribe, clearSession, cookieHeader };

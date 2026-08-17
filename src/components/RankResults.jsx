@@ -1,39 +1,23 @@
 /**
  * @param {{
- *   item: import('../types/photochak').RankItem,
+ *   result: import('../types/photochak').RankResult,
+ *   mode: "sample" | "top10",
  * }} props
  */
-function RankCard({ item }) {
-  const rank = item.rank != null ? `${item.rank}위 · ` : "";
-  const src =
-    typeof item.preview === "string" && item.preview.startsWith("data:image/")
-      ? item.preview
-      : "";
-
-  return (
-    <article className="rank-card">
-      {src ? <img src={src} alt="" /> : null}
-      <p>
-        <b>
-          {rank}
-          {item.name || ""}
-        </b>
-      </p>
-      <p className="rank-card__meta">{item.genre || ""}</p>
-      <p className="rank-card__why">{item.reason || ""}</p>
-    </article>
-  );
-}
-
-/**
- * @param {{ result: import('../types/photochak').RankResult }} props
- */
-export function RankResults({ result }) {
-  const groups = [
-    { key: "portraits", title: "인물 샘플" },
-    { key: "landscapes", title: "풍경 샘플" },
-    { key: "top10", title: "베스트 10" },
-  ];
+export function RankResults({ result, mode }) {
+  const groups =
+    mode === "top10"
+      ? [{ key: "top10", title: "베스트 10" }]
+      : mode === "sample"
+        ? [
+            { key: "portraits", title: "인물 샘플" },
+            { key: "landscapes", title: "풍경 샘플" },
+          ]
+        : [
+            { key: "portraits", title: "인물 샘플" },
+            { key: "landscapes", title: "풍경 샘플" },
+            { key: "top10", title: "베스트 10" },
+          ];
 
   return (
     <>
@@ -63,5 +47,32 @@ export function RankResults({ result }) {
         </p>
       ) : null}
     </>
+  );
+}
+
+/**
+ * @param {{
+ *   item: import('../types/photochak').RankItem,
+ * }} props
+ */
+function RankCard({ item }) {
+  const rank = item.rank != null ? `${item.rank}위 · ` : "";
+  const src =
+    typeof item.preview === "string" && item.preview.startsWith("data:image/")
+      ? item.preview
+      : "";
+
+  return (
+    <article className="rank-card">
+      {src ? <img src={src} alt="" /> : null}
+      <p>
+        <b>
+          {rank}
+          {item.name || ""}
+        </b>
+      </p>
+      <p className="rank-card__meta">{item.genre || ""}</p>
+      <p className="rank-card__why">{item.reason || ""}</p>
+    </article>
   );
 }

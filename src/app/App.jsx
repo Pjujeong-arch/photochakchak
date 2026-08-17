@@ -6,12 +6,14 @@ import {
   OptionChecks,
   PreviewResult,
   ProgressRunway,
+  RankGallery,
   RankPanel,
   Reel,
   SiteFooter,
   SkippedList,
   StorageTips,
   SubscribeBar,
+  SubscribeOffer,
   Toast,
 } from "../components/index.js";
 import {
@@ -30,17 +32,21 @@ export default function App() {
   const progress = useProgress();
   const [keepAwake, setKeepAwake] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
   const wakeLock = useWakeLock({
     running: progress.busy,
     keepAwake,
   });
   const subscribe = useSubscribe(toast);
+  const { mountButton, me, clientId, authLoading } = subscribe;
   const meRef = useRef(subscribe.me);
-  meRef.current = subscribe.me;
+  meRef.current = me;
   const openLoginModal = useCallback(() => {
     if (!meRef.current?.email) setLoginOpen(true);
   }, []);
   const closeLoginModal = useCallback(() => setLoginOpen(false), []);
+  const openOffer = useCallback(() => setOfferOpen(true), []);
+  const closeOffer = useCallback(() => setOfferOpen(false), []);
   const {
     preview,
     clearPreview,
@@ -65,8 +71,10 @@ export default function App() {
   const rank = useRank({
     files: folders.files,
     preview,
-    me: subscribe.me,
+    me,
     toast,
+    onNeedLogin: openLoginModal,
+    onNeedSubscribe: openOffer,
   });
 
   useEffect(() => {
@@ -75,14 +83,14 @@ export default function App() {
 
   useEffect(() => {
     if (!loginOpen) return undefined;
-    subscribe.mountButton();
+    mountButton();
     return undefined;
-  }, [loginOpen, subscribe.me, subscribe.clientId, subscribe.mountButton]);
+  }, [loginOpen, me, clientId, mountButton]);
 
   useEffect(() => {
-    if (!loginOpen || !subscribe.me?.email || subscribe.authLoading) return;
+    if (!loginOpen || !me?.email || authLoading) return;
     setLoginOpen(false);
-  }, [loginOpen, subscribe.me, subscribe.authLoading]);
+  }, [loginOpen, me, authLoading]);
 
   const modalOpen = modal.kind !== "none";
   const modalTitle = modal.kind === "none" ? "" : modal.title;
@@ -145,7 +153,7 @@ export default function App() {
                 act={progress.act}
                 say={progress.say}
                 actUrl={progress.actUrl}
-                suppressed={modalOpen}
+                suppressed={modalOpen || loginOpen || offerOpen || Boolean(rank.gallery)}
               />
             </div>
           </section>
@@ -172,8 +180,10 @@ export default function App() {
               error={rank.error}
               result={rank.result}
               meLabel={
-                subscribe.me?.email
-                  ? `${subscribe.me.email} · 이번 세션 구독`
+                me?.email
+                  ? me.subscribed
+                    ? `${me.email} · 구독 중`
+                    : `${me.email} · 샘플만`
                   : undefined
               }
               onFolder={rank.setFolder}
@@ -182,6 +192,9 @@ export default function App() {
               onConsent={rank.setConsent}
               onSample={rank.runSample}
               onTop10={rank.runTop10}
+              onOpenSample={rank.openSampleGallery}
+              onOpenTop10={rank.openTop10Gallery}
+              onOpenSubscribe={openOffer}
             />
             <SkippedList items={modal.skipped} />
           </>
@@ -198,12 +211,12 @@ export default function App() {
           자동 분류는 그대로 진행됩니다. 이 창에서 로그인해도 복사 작업은
           멈추지 않습니다.
         </p>
-        {subscribe.me?.email ? (
-          <p className="login-modal__ok">{subscribe.me.email}</p>
+        {me?.email ? (
+          <p className="login-modal__ok">{me.email}</p>
         ) : null}
         <div className="login-modal__actions">
           <button
-            className="btn login-modal__later"
+            className="login-modal__later"
             type="button"
             onClick={closeLoginModal}
           >
@@ -211,13 +224,54 @@ export default function App() {
           </button>
           <SubscribeBar
             btnRef={subscribe.btnRef}
-            showLogout={Boolean(subscribe.me?.email)}
+            showLogout={Boolean(me?.email)}
             onLogout={subscribe.logout}
             loading={subscribe.loading}
             authLoading={subscribe.authLoading}
             error={subscribe.error}
           />
         </div>
+      </Modal>
+      <Modal
+        open={Boolean(rank.gallery && rank.result)}
+        title={rank.gallery === "top10" ? "베스트 10" : "샘플 추천"}
+        onClose={rank.closeGallery}
+        closeLabel="닫기"
+        layer="top"
+        size="wide"
+      >
+        {rank.gallery && rank.result ? (
+          <RankGallery
+            mode={rank.gallery}
+            result={rank.result}
+            subscribed={Boolean(me?.subscribed)}
+            onSubscribe={() => {
+              rank.closeGallery();
+              openOffer();
+            }}
+          />
+        ) : null}
+      </Modal>
+      <Modal
+        open={offerOpen}
+        title="포토착착 구독"
+        onClose={closeOffer}
+        closeLabel="닫기"
+        layer="top"
+      >
+        <SubscribeOffer
+          email={me?.email}
+          subscribed={Boolean(me?.subscribed)}
+          paying={subscribe.authLoading}
+          onLogin={() => {
+            closeOffer();
+            openLoginModal();
+          }}
+          onPay={async () => {
+            const user = await subscribe.startPlan();
+            if (user?.subscribed) closeOffer();
+          }}
+        />
       </Modal>
     </>
   );
