@@ -119,10 +119,14 @@ html[data-sky="storm"] {
 }
 
 html[data-day="night"] {
-  --bg: color-mix(in srgb, var(--bg) 78%, #2a3140);
-  --bg-glow: color-mix(in srgb, var(--bg-glow) 62%, #4a3f58);
-  --bg-mist: color-mix(in srgb, var(--bg-mist) 55%, #2c3648);
-  --paper: color-mix(in srgb, var(--paper) 88%, #d8d4e0);
+  --bg: #3a3f48;
+  --bg-glow: #52485c;
+  --bg-mist: #3a4454;
+  --paper: #ebe6ef;
+  --line: #c4bec8;
+  --ink: #2c2832;
+  --muted: #6e6872;
+  --pick: #e4e0e8;
 }
 
 *,
@@ -1529,7 +1533,7 @@ a {
 }
 
 .modal--top {
-  z-index: 50;
+  z-index: 70;
 }
 
 .modal--bare .modal__backdrop {
@@ -1554,6 +1558,16 @@ a {
   clip: rect(0 0 0 0);
 }
 
+.modal--solid .modal__backdrop {
+  background: rgba(28, 20, 16, 0.88);
+}
+
+.modal--solid .modal__card {
+  background: #fff8f3;
+  opacity: 1;
+  isolation: isolate;
+}
+
 .modal[hidden] {
   display: none;
 }
@@ -1561,7 +1575,7 @@ a {
 .modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(42, 33, 28, 0.45);
+  background: rgba(28, 20, 16, 0.82);
 }
 
 .modal__card {
@@ -1569,7 +1583,10 @@ a {
   width: min(720px, 100%);
   max-height: min(86dvh, 780px);
   overflow: auto;
-  background: var(--paper);
+  background: #fff8f3;
+  background: var(--paper, #fff8f3);
+  opacity: 1;
+  isolation: isolate;
   border: 1px solid var(--line);
   border-radius: 24px;
   box-shadow: 0 24px 60px rgba(90, 48, 28, 0.22);

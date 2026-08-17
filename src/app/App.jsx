@@ -218,7 +218,7 @@ export default function App() {
         <SiteFooter />
       </div>
       <Toast message={toast.message} visible={toast.visible} />
-      <Modal open={modalOpen} title={modalTitle} onClose={closeModal}>
+      <Modal open={modalOpen && !loginOpen} title={modalTitle} onClose={closeModal}>
         {modal.kind === "preview" ? (
           <PreviewResult preview={modal.preview} />
         ) : null}
@@ -263,6 +263,7 @@ export default function App() {
         onClose={closeLoginModal}
         closeLabel={null}
         layer="top"
+        solid
       >
         <p className="login-modal__hint">
           샘플·베스트 추천을 쓰려면 구글 계정으로 로그인해 주세요.

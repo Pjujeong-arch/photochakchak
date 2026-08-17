@@ -10,6 +10,7 @@ import { useEffect, useId } from "react";
  *   layer?: "base" | "top",
  *   size?: "base" | "wide",
  *   bare?: boolean,
+ *   solid?: boolean,
  * }} props
  */
 export function Modal({
@@ -21,6 +22,7 @@ export function Modal({
   layer = "base",
   size = "base",
   bare = false,
+  solid = false,
 }) {
   const titleId = useId();
 
@@ -37,7 +39,7 @@ export function Modal({
 
   return (
     <div
-      className={`modal${layer === "top" ? " modal--top" : ""}${size === "wide" ? " modal--wide" : ""}${bare ? " modal--bare" : ""}`}
+      className={`modal${layer === "top" ? " modal--top" : ""}${size === "wide" ? " modal--wide" : ""}${bare ? " modal--bare" : ""}${solid ? " modal--solid" : ""}`}
     >
       <div className="modal__backdrop" onClick={onClose} />
       <div
