@@ -11,6 +11,45 @@ export function canPickDir() {
   return typeof window.showDirectoryPicker === "function";
 }
 
+export function canUseOpfs() {
+  return typeof navigator !== "undefined" && typeof navigator.storage?.getDirectory === "function";
+}
+
+/** @returns {string} */
+export function destFolderName() {
+  const dt = new Date();
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `포토착착_${y}-${m}-${d}`;
+}
+
+/** @returns {Promise<FileSystemDirectoryHandle | null>} */
+export async function pickCopyFolder() {
+  if (canPickDir()) {
+    try {
+      try {
+        return await window.showDirectoryPicker({
+          mode: "readwrite",
+          startIn: "downloads",
+        });
+      } catch (err) {
+        if (/** @type {{ name?: string }} */ (err).name === "AbortError") return null;
+        return await window.showDirectoryPicker({ mode: "readwrite" });
+      }
+    } catch (err) {
+      if (/** @type {{ name?: string }} */ (err).name === "AbortError") return null;
+      throw err;
+    }
+  }
+  if (canUseOpfs()) {
+    if (navigator.storage?.persist) await navigator.storage.persist().catch(() => false);
+    const root = await navigator.storage.getDirectory();
+    return root.getDirectoryHandle("포토착착_베스트", { create: true });
+  }
+  throw new Error("no_dest");
+}
+
 /** @param {File} file */
 export function fileKey(file) {
   return `${file.webkitRelativePath || file.name}|${file.size}|${file.lastModified}`;
