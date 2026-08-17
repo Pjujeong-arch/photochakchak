@@ -29,6 +29,7 @@
 :root {
   --bg: #f7eee6;
   --bg-glow: #f8dccb;
+  --bg-mist: #e7f1ea;
   --ink: #3b2f2a;
   --muted: #7a6a62;
   --line: #ead6c8;
@@ -61,6 +62,69 @@
   --safe-x: max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
 }
 
+html[data-sky="clear"] {
+  --bg: #f8efe2;
+  --bg-glow: #ffd4a8;
+  --bg-mist: #fff1cc;
+  --paper: #fffaf3;
+  --line: #f0d3b4;
+  --pick: #fff6ea;
+}
+
+html[data-sky="cloud"] {
+  --bg: #efeae6;
+  --bg-glow: #ddd4cc;
+  --bg-mist: #e3eaee;
+  --paper: #f7f4f1;
+  --line: #ddd0c6;
+  --pick: #f4efe9;
+}
+
+html[data-sky="fog"] {
+  --bg: #eeeae4;
+  --bg-glow: #e0d8ce;
+  --bg-mist: #e8e6e1;
+  --paper: #f6f3ee;
+  --line: #ddd6cc;
+}
+
+html[data-sky="rain"] {
+  --bg: #e7eef3;
+  --bg-glow: #c5d8e8;
+  --bg-mist: #d4e4ec;
+  --paper: #f3f8fb;
+  --line: #cfdce6;
+  --pick: #eef5f8;
+  --pick-line: #b7c9d6;
+  --ink: #2f3a42;
+}
+
+html[data-sky="snow"] {
+  --bg: #f2f6fb;
+  --bg-glow: #dce8f6;
+  --bg-mist: #eef4fb;
+  --paper: #fbfdff;
+  --line: #d5e1ee;
+  --pick: #f4f8fc;
+  --ink: #33404c;
+}
+
+html[data-sky="storm"] {
+  --bg: #e6e4ec;
+  --bg-glow: #cfc6de;
+  --bg-mist: #d4dae6;
+  --paper: #f4f2f8;
+  --line: #d2ccd8;
+  --ink: #322e3a;
+}
+
+html[data-day="night"] {
+  --bg: color-mix(in srgb, var(--bg) 78%, #2a3140);
+  --bg-glow: color-mix(in srgb, var(--bg-glow) 62%, #4a3f58);
+  --bg-mist: color-mix(in srgb, var(--bg-mist) 55%, #2c3648);
+  --paper: color-mix(in srgb, var(--paper) 88%, #d8d4e0);
+}
+
 *,
 *::before,
 *::after {
@@ -79,7 +143,7 @@ body {
   font-family: var(--font-sans);
   background:
     radial-gradient(1100px 520px at 8% -8%, var(--bg-glow) 0%, transparent 58%),
-    radial-gradient(800px 420px at 100% 0%, #e7f1ea 0%, transparent 52%),
+    radial-gradient(800px 420px at 100% 0%, var(--bg-mist) 0%, transparent 52%),
     var(--bg);
   color: var(--ink);
   line-height: 1.6;

@@ -18,6 +18,7 @@ export {
   activateSubscribe,
 } from "./auth";
 export { requestRank } from "./rank-api";
+export { startWeatherTheme } from "./weather.js";
 
 /** @deprecated use fetchAuthConfig */
 export { fetchAuthConfig as fetchConfig } from "./auth";
