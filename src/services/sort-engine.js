@@ -76,6 +76,10 @@ function isImageFile(file) {
   return !isSkippedName(file.name || "");
 }
 
+function isPhotoFile(file) {
+  return IMAGE_EXTENSIONS.has(fileExt(file.name || ""));
+}
+
 function formatBytes(n) {
   let value = n;
   for (const unit of ["B", "KB", "MB", "GB", "TB"]) {
@@ -701,6 +705,7 @@ async function copyToZip(files, options, onProgress) {
 
 export {
   isImageFile,
+  isPhotoFile,
   formatBytes,
   analyzeFiles,
   copyToDirectory,
