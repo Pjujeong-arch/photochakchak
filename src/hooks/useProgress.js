@@ -101,18 +101,29 @@ export function useProgress() {
     }, 1600);
   }, [stopPome]);
 
+  const clearPose = useCallback(() => {
+    if (timer.current) {
+      window.clearInterval(timer.current);
+      timer.current = 0;
+    }
+    setDonePose(false);
+    setAct("idle");
+    setSay("멍!");
+  }, []);
+
   const setRunning = useCallback(
-    (isBusy) => {
+    (isBusy, opts = {}) => {
       setBusy(isBusy);
       if (isBusy) {
         resetEta();
         setPct(0);
         startPome();
-      } else {
-        stopPome(false);
+        return;
       }
+      if (opts.celebrate === false) clearPose();
+      else stopPome(false);
     },
-    [resetEta, setPct, startPome, stopPome]
+    [resetEta, setPct, startPome, stopPome, clearPose]
   );
 
   useEffect(() => () => {
@@ -126,6 +137,7 @@ export function useProgress() {
     setStatus,
     busy,
     setRunning,
+    clearPose,
     act,
     say,
     donePose,

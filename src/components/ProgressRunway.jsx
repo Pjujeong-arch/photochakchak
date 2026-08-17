@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
  *   act: string,
  *   say: string,
  *   actUrl: (id: string) => string,
+ *   suppressed?: boolean,
  * }} props
  */
 export function ProgressRunway({
@@ -19,21 +20,25 @@ export function ProgressRunway({
   act,
   say,
   actUrl,
+  suppressed = false,
 }) {
   const pomeRef = useRef(/** @type {HTMLDivElement | null} */ (null));
   const onRef = useRef(/** @type {HTMLImageElement | null} */ (null));
   const nextRef = useRef(/** @type {HTMLImageElement | null} */ (null));
   const frontIsOn = useRef(true);
+  const showBig = !suppressed && (busy || donePose);
+  const poseAct = suppressed ? "idle" : act;
+  const poseSay = suppressed ? "" : say;
 
   useEffect(() => {
     const el = pomeRef.current;
     if (!el || !el.parentElement) return;
     const max = Math.max(0, el.parentElement.clientWidth - el.offsetWidth);
     el.style.left = `${(pct / 100) * max}px`;
-  }, [pct]);
+  }, [pct, busy, donePose, suppressed]);
 
   useEffect(() => {
-    const href = actUrl(act);
+    const href = actUrl(poseAct);
     const on = frontIsOn.current ? onRef.current : nextRef.current;
     const next = frontIsOn.current ? nextRef.current : onRef.current;
     if (!on || !next) return;
@@ -47,18 +52,21 @@ export function ProgressRunway({
     next.onload = reveal;
     if (next.complete && next.naturalWidth && next.src === href) reveal();
     else next.src = href;
-  }, [act, actUrl]);
+  }, [poseAct, actUrl]);
 
   return (
-    <div className="progress-box">
-      <div className="pome-runway" aria-hidden="true">
+    <div className={`progress-box${suppressed ? " is-suppressed" : ""}`}>
+      <div
+        className={`pome-runway${suppressed ? " is-suppressed" : ""}`}
+        aria-hidden="true"
+      >
         <div className="pome-runway__path" />
         <div
           ref={pomeRef}
-          className={`pome${busy ? " is-busy" : ""}${donePose ? " is-done" : ""}`}
-          data-act={act}
+          className={`pome${showBig ? " is-busy" : ""}${!suppressed && donePose ? " is-done" : ""}`}
+          data-act={poseAct}
         >
-          <span className="pome__say">{say}</span>
+          <span className="pome__say">{poseSay}</span>
           <span className="pome__hearts">
             <i />
             <i />
