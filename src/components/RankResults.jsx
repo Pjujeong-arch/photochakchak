@@ -2,9 +2,11 @@
  * @param {{
  *   result: import('../types/photochak').RankResult,
  *   mode: "sample" | "top10",
+ *   selected?: Set<string>,
+ *   onToggle?: (id: string) => void,
  * }} props
  */
-export function RankResults({ result, mode }) {
+export function RankResults({ result, mode, selected, onToggle }) {
   const groups =
     mode === "top10"
       ? [{ key: "top10", title: "베스트 10" }]
@@ -35,7 +37,12 @@ export function RankResults({ result, mode }) {
             <h3 className="rank-h">{group.title}</h3>
             <div className="rank-grid">
               {list.map((item) => (
-                <RankCard key={`${group.key}-${item.id}`} item={item} />
+                <RankCard
+                  key={`${group.key}-${item.id}`}
+                  item={item}
+                  selected={Boolean(selected && selected.has(item.id))}
+                  onToggle={onToggle}
+                />
               ))}
             </div>
           </div>
@@ -53,17 +60,30 @@ export function RankResults({ result, mode }) {
 /**
  * @param {{
  *   item: import('../types/photochak').RankItem,
+ *   selected?: boolean,
+ *   onToggle?: (id: string) => void,
  * }} props
  */
-function RankCard({ item }) {
+function RankCard({ item, selected = false, onToggle }) {
   const rank = item.rank != null ? `${item.rank}위 · ` : "";
   const src =
     typeof item.preview === "string" && item.preview.startsWith("data:image/")
       ? item.preview
       : "";
+  const selectable = typeof onToggle === "function";
 
   return (
-    <article className="rank-card">
+    <article className={`rank-card${selected ? " is-selected" : ""}`}>
+      {selectable ? (
+        <label className="rank-card__pick">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onToggle(item.id)}
+          />
+          선택
+        </label>
+      ) : null}
       {src ? <img src={src} alt="" /> : null}
       <p>
         <b>
@@ -75,4 +95,10 @@ function RankCard({ item }) {
       <p className="rank-card__why">{item.reason || ""}</p>
     </article>
   );
+}
+
+/** @param {import('../types/photochak').RankResult} result @param {"sample" | "top10"} mode */
+export function listRankItems(result, mode) {
+  if (mode === "top10") return Array.isArray(result.top10) ? result.top10 : [];
+  return [...(result.portraits || []), ...(result.landscapes || [])];
 }

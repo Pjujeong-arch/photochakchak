@@ -5,8 +5,9 @@ import {
   requestRank,
   ApiError,
   toErrorMessage,
+  copyFilesToDirectory,
 } from "../services/index.js";
-import { monthOf, pickSpread } from "../utils/index.js";
+import { monthOf, pickSpread, pickCopyFolder } from "../utils/index.js";
 
 /**
  * @param {{
@@ -112,18 +113,26 @@ export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscrib
           }
         }
         if (!images.length) {
-          throw new Error("축소본을 만들 수 있는 사진이 없습니다.");
+          throw new Error(
+            "이 기기에서 사진을 미리보기로 만들지 못했습니다. JPEG·PNG로 저장한 뒤 다시 시도해 주세요."
+          );
         }
         const data = await requestRank({ mode, folder, from, to, images });
         const previewById = Object.fromEntries(
           images.map((img) => [img.id, `data:${img.mime};base64,${img.data}`])
+        );
+        const fileById = Object.fromEntries(
+          images.map((img) => [img.id, chosen[Number(img.id)]])
         );
         /** @type {Array<'portraits' | 'landscapes' | 'top10'>} */
         const keys = ["portraits", "landscapes", "top10"];
         keys.forEach((key) => {
           const list = data[key] || [];
           list.forEach((item) => {
-            if (item && previewById[item.id]) item.preview = previewById[item.id];
+            if (!item) return;
+            if (previewById[item.id]) item.preview = previewById[item.id];
+            const src = fileById[item.id];
+            if (src) item.file = src;
           });
         });
         setStatus("추천이 도착했습니다.");
@@ -151,6 +160,30 @@ export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscrib
     else onNeedSubscribe?.();
   }, [result, onNeedSubscribe]);
 
+  const copyPicks = useCallback(
+    async (picks) => {
+      const list = (picks || []).filter(Boolean);
+      if (!list.length) {
+        toast.show("복사할 사진을 선택해 주세요.");
+        return;
+      }
+      try {
+        const dest = await pickCopyFolder();
+        if (!dest) return;
+        const { copied } = await copyFilesToDirectory(list, dest);
+        toast.show(`${copied}장을 복사했습니다. 원본은 그대로입니다.`);
+      } catch (err) {
+        const code = err instanceof Error ? err.message : "";
+        toast.show(
+          code === "no_dest"
+            ? "이 브라우저는 폴더 저장이 안 됩니다. ZIP으로 받아 주세요."
+            : "선택한 사진을 복사하지 못했습니다."
+        );
+      }
+    },
+    [toast]
+  );
+
   return {
     folder,
     setFolder,
@@ -171,5 +204,6 @@ export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscrib
     months,
     runSample: () => run("sample"),
     runTop10: () => run("top10"),
+    copyPicks,
   };
 }

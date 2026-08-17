@@ -703,12 +703,48 @@ async function copyToZip(files, options, onProgress) {
   return { stats, blob, skipped };
 }
 
+function uniqueFileName(used, filename) {
+  if (!used.has(filename)) {
+    used.add(filename);
+    return filename;
+  }
+  const dot = filename.lastIndexOf(".");
+  const stem = dot >= 0 ? filename.slice(0, dot) : filename;
+  const suffix = dot >= 0 ? filename.slice(dot) : "";
+  let i = 1;
+  while (used.has(`${stem}_${i}${suffix}`)) i += 1;
+  const next = `${stem}_${i}${suffix}`;
+  used.add(next);
+  return next;
+}
+
+/**
+ * Copy originals into a user-chosen folder. Never moves or deletes source files.
+ * @param {File[]} files
+ * @param {FileSystemDirectoryHandle} destHandle
+ */
+async function copyFilesToDirectory(files, destHandle) {
+  const used = new Set();
+  let copied = 0;
+  for (let i = 0; i < files.length; i += 1) {
+    const file = files[i];
+    if (!file) continue;
+    const filename = uniqueFileName(used, file.name || `photo-${i + 1}.jpg`);
+    const handle = await destHandle.getFileHandle(filename, { create: true });
+    const writable = await handle.createWritable();
+    await writeFileChunked(file, writable);
+    copied += 1;
+  }
+  return { copied };
+}
+
 export {
   isImageFile,
   isPhotoFile,
   formatBytes,
   analyzeFiles,
   copyToDirectory,
+  copyFilesToDirectory,
   copyToZip,
   undoLastRun,
 };

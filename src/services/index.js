@@ -1,6 +1,7 @@
 export {
   analyzeFiles,
   copyToDirectory,
+  copyFilesToDirectory,
   copyToZip,
   formatBytes,
   isImageFile,

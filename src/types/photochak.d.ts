@@ -54,6 +54,7 @@ export type RankItem = {
   name?: string;
   reason?: string;
   preview?: string;
+  file?: File;
 };
 
 export type RankResult = {

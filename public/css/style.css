@@ -1857,11 +1857,31 @@ a {
   gap: 8px;
 }
 
-.rank-card {
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 8px;
-  background: #fff;
+.rank-card.is-selected {
+  border-color: var(--olive);
+  background: #f3faf6;
+}
+
+.rank-card__pick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--olive);
+  cursor: pointer;
+}
+
+.rank-gallery__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.rank-gallery__bar .btn {
+  flex: 1 1 140px;
 }
 
 .rank-card img {
