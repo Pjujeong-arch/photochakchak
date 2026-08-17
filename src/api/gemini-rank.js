@@ -65,7 +65,13 @@ function validateImages(images, cap) {
 async function rankWithGemini({ mode, folder, from, to, images }) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("missing_gemini_key");
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const preferred = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+  const models = [
+    preferred,
+    "gemini-3.6-flash",
+    "gemini-3.7-flash",
+    "gemini-flash-latest",
+  ].filter((name, i, arr) => arr.indexOf(name) === i);
   const cap = mode === "sample" ? 12 : 20;
   const safe = validateImages(images, cap);
   const parts = /** @type {object[]} */ ([{ text: `${systemPrompt()}\n${userPrompt(mode, folder, from, to)}` }]);
@@ -73,31 +79,42 @@ async function rankWithGemini({ mode, folder, from, to, images }) {
     parts.push({ text: `id=${img.id} name=${img.name}` });
     parts.push({ inlineData: { mimeType: img.mime, data: img.data } });
   });
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts }],
-      generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
-    }),
-  });
-  const body = /** @type {Record<string, any>} */ (await res.json().catch(() => ({})));
-  if (!res.ok) {
-    const msg = body.error && body.error.message ? body.error.message : "gemini_failed";
-    throw new Error(msg);
+  let lastErr = "gemini_failed";
+  for (const model of models) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": key,
+      },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts }],
+        generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
+      }),
+    });
+    const body = /** @type {Record<string, any>} */ (await res.json().catch(() => ({})));
+    if (res.status === 404) continue;
+    if (!res.ok) {
+      const raw = body.error && body.error.message ? String(body.error.message) : "gemini_failed";
+      if (/prepayment|credits|billing|quota|RESOURCE_EXHAUSTED/i.test(raw)) {
+        throw new Error("gemini_credits");
+      }
+      throw new Error(raw.slice(0, 280));
+    }
+    const text = (((body.candidates || [])[0] || {}).content || {}).parts
+      ? body.candidates[0].content.parts.map((p) => p.text || "").join("")
+      : "";
+    const parsed = parseModelJson(text);
+    const allowed = new Map(safe.map((img) => [img.id, img.name]));
+    return {
+      portraits: sanitizeList(parsed.portraits, allowed, 3),
+      landscapes: sanitizeList(parsed.landscapes, allowed, 3),
+      top10: sanitizeList(parsed.top10, allowed, 10),
+      nextRun: String(parsed.nextRun || "").slice(0, 280),
+    };
   }
-  const text = (((body.candidates || [])[0] || {}).content || {}).parts
-    ? body.candidates[0].content.parts.map((p) => p.text || "").join("")
-    : "";
-  const parsed = parseModelJson(text);
-  const allowed = new Map(safe.map((img) => [img.id, img.name]));
-  return {
-    portraits: sanitizeList(parsed.portraits, allowed, 3),
-    landscapes: sanitizeList(parsed.landscapes, allowed, 3),
-    top10: sanitizeList(parsed.top10, allowed, 10),
-    nextRun: String(parsed.nextRun || "").slice(0, 280),
-  };
+  throw new Error(lastErr);
 }
 
 module.exports = { rankWithGemini };
