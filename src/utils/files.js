@@ -51,9 +51,17 @@ export async function pickOrCreateDestFolder(folderName) {
     }
   }
   if (!canUseOpfs()) throw new Error("no_dest");
-  if (navigator.storage?.persist) await navigator.storage.persist().catch(() => false);
-  const root = await navigator.storage.getDirectory();
-  const handle = await root.getDirectoryHandle(folderName, { create: true });
+  if (navigator.storage?.persist) navigator.storage.persist().catch(() => false);
+  const root = await Promise.race([
+    navigator.storage.getDirectory(),
+    new Promise((_, reject) => {
+      window.setTimeout(() => reject(new Error("no_dest")), 8000);
+    }),
+  ]);
+  const handle = await /** @type {FileSystemDirectoryHandle} */ (root).getDirectoryHandle(
+    folderName,
+    { create: true }
+  );
   return { handle, label: folderName, via: "opfs" };
 }
 

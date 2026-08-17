@@ -67,6 +67,7 @@ export default function App() {
   } = useSort({
     files: folders.files,
     destHandle: folders.destHandle,
+    ensureDest: folders.ensureDest,
     toast,
     progress,
     wakeLock,
@@ -139,7 +140,11 @@ export default function App() {
               <div className="folder-picks">
                 <FolderPickButton
                   variant="source"
-                  label="[1] 정리할 폴더 (사진·영상·기타)"
+                  label={
+                    folders.phone
+                      ? "[1] 정리할 사진·영상 고르기"
+                      : "[1] 정리할 폴더 (사진·영상·기타)"
+                  }
                   name={folders.sourcePick.name}
                   meta={folders.sourcePick.meta}
                   picked={folders.sourcePick.picked}
@@ -147,17 +152,29 @@ export default function App() {
                   onClick={folders.openSourcePicker}
                 />
                 <input
-                  ref={folders.inputRef}
-                  id="source-input"
+                  ref={folders.folderInputRef}
+                  id="source-folder-input"
                   type="file"
                   multiple
                   hidden
                   {...{ webkitdirectory: "", directory: "" }}
                   onChange={folders.onSourceChange}
                 />
+                <input
+                  ref={folders.fileInputRef}
+                  id="source-file-input"
+                  type="file"
+                  multiple
+                  hidden
+                  onChange={folders.onSourceChange}
+                />
                 <FolderPickButton
                   variant="dest"
-                  label="[2] 정리본 저장 — 폴더 만들기 (원본과 다른 위치)"
+                  label={
+                    folders.phone
+                      ? "[2] 정리본 저장 — 앱 안 폴더"
+                      : "[2] 정리본 저장 — 폴더 만들기 (원본과 다른 위치)"
+                  }
                   name={folders.destPick.name}
                   meta={folders.destPick.meta}
                   picked={folders.destPick.picked}

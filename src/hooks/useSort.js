@@ -12,6 +12,7 @@ import { doneSummary } from "../utils/index.js";
  * @param {{
  *   files: File[],
  *   destHandle: FileSystemDirectoryHandle | null,
+ *   ensureDest?: () => Promise<FileSystemDirectoryHandle | null>,
  *   toast: { show: (msg: string) => void },
  *   progress: ReturnType<typeof import('./useProgress.js').useProgress>,
  *   wakeLock: { hold: () => Promise<void>, release: () => Promise<void> },
@@ -23,6 +24,7 @@ import { doneSummary } from "../utils/index.js";
 export function useSort({
   files,
   destHandle,
+  ensureDest,
   toast,
   progress,
   wakeLock,
@@ -119,8 +121,10 @@ export function useSort({
     async (spec) => {
       if (running.current) return;
       if (!files.length) return toast.show("정리할 사진 폴더를 먼저 선택해 주세요.");
-      if (spec.needDest && !destHandle) {
-        return toast.show("저장 폴더를 선택하거나 ZIP으로 받으세요.");
+      let dest = destHandle;
+      if (spec.needDest && !dest) dest = (await ensureDest?.()) || null;
+      if (spec.needDest && !dest) {
+        return toast.show("저장 폴더를 만들 수 없습니다. ZIP으로 받으세요.");
       }
       if (!confirmCopy(spec.confirmLabel)) return;
       spec.onStarted?.();
@@ -132,7 +136,7 @@ export function useSort({
       const startedAt = performance.now();
       progress.setStatus(spec.startText);
       try {
-        const { stats, skipped, blob } = await spec.run(startedAt);
+        const { stats, skipped, blob } = await spec.run(startedAt, dest);
         if (blob) {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -168,7 +172,7 @@ export function useSort({
         progress.setRunning(false);
       }
     },
-    [files, destHandle, toast, confirmCopy, progress, setKeepAwake, wakeLock]
+    [files, destHandle, ensureDest, toast, confirmCopy, progress, setKeepAwake, wakeLock]
   );
 
   const runCopy = useCallback(() => {
@@ -180,10 +184,12 @@ export function useSort({
       tipKind: "folder",
       onStarted: onCopyStarted,
       onFinished: onCopyFinished,
-      run: (startedAt) =>
-        copyToDirectory(files, destHandle, buildOptions(), (done, total, _msg, extra) =>
+      run: (startedAt, dest) => {
+        if (!dest) return Promise.reject(new Error("no_dest"));
+        return copyToDirectory(files, dest, buildOptions(), (done, total, _msg, extra) =>
           onTick(startedAt, done, total, extra)
-        ),
+        );
+      },
     });
   }, [runJob, files, destHandle, buildOptions, onTick, onCopyStarted, onCopyFinished]);
 

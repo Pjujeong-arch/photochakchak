@@ -623,6 +623,7 @@ a {
   padding: 10px 14px;
   white-space: normal;
   text-align: left;
+  touch-action: manipulation;
 }
 
 .btn--pick:hover:not(:disabled) {
