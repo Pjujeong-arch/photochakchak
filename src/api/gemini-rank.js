@@ -44,7 +44,11 @@ function parseModelJson(text) {
   const start = raw.indexOf("{");
   const end = raw.lastIndexOf("}");
   if (start < 0 || end <= start) throw new Error("model_json");
-  return JSON.parse(raw.slice(start, end + 1));
+  try {
+    return JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    throw new Error("model_json");
+  }
 }
 
 function validateImages(images, cap) {
@@ -62,6 +66,29 @@ function validateImages(images, cap) {
   });
 }
 
+function classifyGeminiError(status, message) {
+  const raw = String(message || "");
+  if (/API_KEY_INVALID|API key not valid|PERMISSION_DENIED|unregistered callers/i.test(raw)) {
+    return "gemini_key";
+  }
+  if (/prepayment|credits|billing|quota|RESOURCE_EXHAUSTED/i.test(raw)) {
+    return "gemini_credits";
+  }
+  if (
+    status === 404 ||
+    /NOT_FOUND|not found|not supported|does not exist|is not available|INVALID_ARGUMENT/i.test(raw)
+  ) {
+    return "retry_model";
+  }
+  return "gemini_failed";
+}
+
+function candidateText(body) {
+  const cand = (body.candidates || [])[0] || {};
+  const parts = ((cand.content || {}).parts || []);
+  return parts.map((p) => p.text || "").join("");
+}
+
 async function rankWithGemini({ mode, folder, from, to, images }) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("missing_gemini_key");
@@ -69,9 +96,11 @@ async function rankWithGemini({ mode, folder, from, to, images }) {
   const models = [
     preferred,
     "gemini-3.6-flash",
-    "gemini-3.7-flash",
+    "gemini-3.5-flash",
     "gemini-flash-latest",
-  ].filter((name, i, arr) => arr.indexOf(name) === i);
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+  ].filter((name, i, arr) => name && arr.indexOf(name) === i);
   const cap = mode === "sample" ? 12 : 20;
   const safe = validateImages(images, cap);
   const parts = /** @type {object[]} */ ([{ text: `${systemPrompt()}\n${userPrompt(mode, folder, from, to)}` }]);
@@ -90,29 +119,39 @@ async function rankWithGemini({ mode, folder, from, to, images }) {
       },
       body: JSON.stringify({
         contents: [{ role: "user", parts }],
-        generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
+        generationConfig: {
+          responseMimeType: "application/json",
+          maxOutputTokens: 4096,
+        },
       }),
     });
     const body = /** @type {Record<string, any>} */ (await res.json().catch(() => ({})));
-    if (res.status === 404) continue;
     if (!res.ok) {
       const raw = body.error && body.error.message ? String(body.error.message) : "gemini_failed";
-      if (/prepayment|credits|billing|quota|RESOURCE_EXHAUSTED/i.test(raw)) {
-        throw new Error("gemini_credits");
+      const kind = classifyGeminiError(res.status, raw);
+      if (kind === "retry_model") {
+        lastErr = "gemini_failed";
+        continue;
       }
-      throw new Error(raw.slice(0, 280));
+      throw new Error(kind);
     }
-    const text = (((body.candidates || [])[0] || {}).content || {}).parts
-      ? body.candidates[0].content.parts.map((p) => p.text || "").join("")
-      : "";
-    const parsed = parseModelJson(text);
-    const allowed = new Map(safe.map((img) => [img.id, img.name]));
-    return {
-      portraits: sanitizeList(parsed.portraits, allowed, 3),
-      landscapes: sanitizeList(parsed.landscapes, allowed, 3),
-      top10: sanitizeList(parsed.top10, allowed, 10),
-      nextRun: String(parsed.nextRun || "").slice(0, 280),
-    };
+    const text = candidateText(body);
+    if (!text) {
+      lastErr = "model_json";
+      continue;
+    }
+    try {
+      const parsed = parseModelJson(text);
+      const allowed = new Map(safe.map((img) => [img.id, img.name]));
+      return {
+        portraits: sanitizeList(parsed.portraits, allowed, 3),
+        landscapes: sanitizeList(parsed.landscapes, allowed, 3),
+        top10: sanitizeList(parsed.top10, allowed, 10),
+        nextRun: String(parsed.nextRun || "").slice(0, 280),
+      };
+    } catch {
+      lastErr = "model_json";
+    }
   }
   throw new Error(lastErr);
 }

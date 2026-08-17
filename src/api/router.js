@@ -118,16 +118,23 @@ async function handleApi(req, res) {
       sendJson(res, 200, result);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "rank_failed";
-      if (msg === "missing_gemini_key") {
-        sendJson(res, 503, { error: "서버에 GEMINI_API_KEY가 없습니다. 로컬은 .env.local, 배포는 Vercel Environment Variables에 넣으세요." });
+      if (msg === "missing_gemini_key" || msg === "gemini_key") {
+        sendJson(res, 503, {
+          error:
+            msg === "gemini_key"
+              ? "GEMINI_API_KEY가 거부되었습니다. AI Studio에서 키를 다시 만들고, 배포는 Vercel Environment Variables에 넣은 뒤 Redeploy 하세요."
+              : "서버에 GEMINI_API_KEY가 없습니다. 로컬은 .env.local, 배포는 Vercel Environment Variables에 넣으세요.",
+        });
       } else if (msg === "gemini_credits") {
         sendJson(res, 429, {
           error: "Google AI 크레딧이 없습니다. AI Studio(https://aistudio.google.com)에서 결제·크레딧을 충전한 뒤 다시 시도해 주세요.",
         });
       } else if (msg === "payload_too_large" || msg === "invalid_json" || msg === "images_range" || msg === "mime" || msg === "data" || msg === "model_json") {
-        sendJson(res, 400, { error: "보낸 사진 데이터가 올바르지 않습니다." });
+        sendJson(res, 400, { error: "보낸 사진 데이터가 올바르지 않습니다. JPEG·PNG로 다시 골라 주세요." });
       } else {
-        sendJson(res, 502, { error: "Google AI 추천에 실패했습니다." });
+        sendJson(res, 502, {
+          error: "Google AI 추천에 실패했습니다. Vercel에 GEMINI_API_KEY가 있는지, AI Studio 크레딧이 있는지 확인하세요.",
+        });
       }
     }
     return true;
