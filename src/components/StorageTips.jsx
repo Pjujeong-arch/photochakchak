@@ -7,6 +7,10 @@ export function StorageTips({ tipKind }) {
 
   return (
     <>
+      <p className="done-next">
+        AI를 활용한 사진 추천이 불필요하면, 이 단계에서 폴더 정리만 하시면
+        됩니다. 구독하시면 사진을 추천받을 수 있어요.
+      </p>
       <p className="modal__woof-note">
         {where} 확인한 뒤 아래 용량 팁을 보면 된다멍.
       </p>
@@ -21,13 +25,13 @@ export function StorageTips({ tipKind }) {
         </p>
         {tipKind === "zip" ? (
           <p>
-            ZIP을 받은 뒤에도 이 창에서 베스트 추천을 할 수 있다멍. 로그인은
-            추천 버튼을 누를 때면 된다개.
+            ZIP만 받아두면 폴더 정리는 끝난 거다멍. 사진 추천은 구독한 뒤에
+            이 창에서 고르면 된다개.
           </p>
         ) : (
           <p>
-            같은 연사는 해시로 이미 건너뛰었어. 베스트만 남기고 나머지는
-            외장·앨범 아카이브가 편하다멍.
+            같은 연사는 해시로 이미 건너뛰었어. 폴더만 쓰면 되고, 베스트만
+            남기고 싶다면 구독 후 추천을 쓰면 된다멍.
           </p>
         )}
         <p className="modal__woof-note">

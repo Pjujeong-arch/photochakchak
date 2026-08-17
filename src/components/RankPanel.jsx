@@ -44,12 +44,10 @@ export function RankPanel({
 }) {
   return (
     <div className={`rank-box${loading ? " is-loading" : ""}`}>
-      <p className="rank-box__lead">
-        구글 로그인 후 샘플(인물 3·풍경 3)을 볼 수 있어요. 베스트 10은 구독에서
-        열리고, 최대 20장 시연입니다.
-      </p>
+      <p className="rank-box__lead">사진 추천 (선택)</p>
       <p className="rank-box__note">
-        축소 이미지만 구글 AI로 보내. 원본 파일은 서버에 저장하지 않아 왈.
+        구독하시면 샘플·베스트 추천을 받을 수 있어요. 축소본만 Google AI로
+        보내며 원본은 서버에 두지 않습니다.
       </p>
       {meLabel ? <p className="rank-user">{meLabel}</p> : null}
       <label className="check">

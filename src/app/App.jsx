@@ -45,10 +45,6 @@ export default function App() {
   const openLoginModal = useCallback(() => {
     if (!meRef.current?.email) setLoginOpen(true);
   }, []);
-  const toastLoginLater = useCallback(() => {
-    if (meRef.current?.email) return;
-    toast.show("분류는 그대로 진행됩니다. 추천은 끝난 뒤 결과 창에서 로그인하면 돼요.");
-  }, [toast]);
   const closeLoginModal = useCallback(() => setLoginOpen(false), []);
   const openOffer = useCallback(() => setOfferOpen(true), []);
   const closeOffer = useCallback(() => setOfferOpen(false), []);
@@ -72,7 +68,6 @@ export default function App() {
     progress,
     wakeLock,
     setKeepAwake,
-    onCopyStarted: toastLoginLater,
   });
   const rank = useRank({
     files: folders.files,
@@ -266,7 +261,8 @@ export default function App() {
         solid
       >
         <p className="login-modal__hint">
-          샘플·베스트 추천을 쓰려면 구글 계정으로 로그인해 주세요.
+          폴더 정리는 로그인 없이 끝난 상태입니다. 사진 추천은 구독 기능이라,
+          진행하려면 구글 계정으로 로그인해 주세요.
         </p>
         {me?.email ? (
           <p className="login-modal__ok">{me.email}</p>

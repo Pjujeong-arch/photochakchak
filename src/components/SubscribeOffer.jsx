@@ -20,6 +20,10 @@ export function SubscribeOffer({
         <b>월 2,900원</b>
         <span>언제든 취소</span>
       </p>
+      <p className="sub-offer__lead">
+        폴더 정리는 구독 없이 쓰실 수 있습니다. 구독하시면 AI 사진 추천을 받을
+        수 있어요.
+      </p>
       <ul className="sub-offer__steps">
         <li>베스트 10 시연 후 고른 사진을 원하는 폴더로 복사</li>
         <li>인물 3 · 풍경 3 샘플 추천</li>
