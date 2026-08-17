@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   fileToThumb,
   isPhotoFile,
@@ -33,6 +33,8 @@ export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscrib
   const [gallery, setGallery] = useState(
     /** @type {"sample" | "top10" | null} */ (null)
   );
+  const [fillPct, setFillPct] = useState(0);
+  const lastMode = useRef(/** @type {"sample" | "top10" | null} */ (null));
 
   const months = useMemo(() => {
     const plans = new Map();
@@ -94,9 +96,12 @@ export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscrib
       }
       const cap = mode === "sample" ? 12 : 20;
       const chosen = pickSpread(photos, cap);
+      lastMode.current = null;
+      setFillPct(0);
       setLoading(true);
       setError(null);
-        setStatus(`축소본 ${chosen.length}장을 Gemini에서 읽는 중…`);
+      setStatus(`축소본 ${chosen.length}장을 Gemini에서 읽는 중…`);
+      let creep = 0;
       try {
         const images = [];
         for (let i = 0; i < chosen.length; i += 1) {
@@ -111,22 +116,26 @@ export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscrib
           } catch {
             /* skip */
           }
+          setFillPct(Math.round(((i + 1) / chosen.length) * 55));
         }
         if (!images.length) {
           throw new Error(
             "이 기기에서 사진을 미리보기로 만들지 못했습니다. JPEG·PNG로 저장한 뒤 다시 시도해 주세요."
           );
         }
+        creep = window.setInterval(() => {
+          setFillPct((p) => (p >= 88 ? p : Math.min(88, p + 2)));
+        }, 380);
         const data = await requestRank({ mode, folder, from, to, images });
+        window.clearInterval(creep);
+        creep = 0;
         const previewById = Object.fromEntries(
           images.map((img) => [img.id, `data:${img.mime};base64,${img.data}`])
         );
         const fileById = Object.fromEntries(
           images.map((img) => [img.id, chosen[Number(img.id)]])
         );
-        /** @type {Array<'portraits' | 'landscapes' | 'top10'>} */
-        const keys = ["portraits", "landscapes", "top10"];
-        keys.forEach((key) => {
+        ["portraits", "landscapes", "top10"].forEach((key) => {
           const list = data[key] || [];
           list.forEach((item) => {
             if (!item) return;
@@ -137,20 +146,33 @@ export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscrib
         });
         setStatus("추천이 도착했습니다.");
         setResult(data);
-        setGallery(mode);
+        lastMode.current = mode;
+        setFillPct(100);
       } catch (err) {
         const msg = toErrorMessage(err, "추천 요청에 실패했습니다.");
         setError(msg);
         setStatus("");
         toast.show(msg);
         if (err instanceof ApiError && err.status === 402) onNeedSubscribe?.();
+        setFillPct(100);
       } finally {
+        if (creep) window.clearInterval(creep);
         setLoading(false);
       }
     },
     [loading, me, consent, filteredPhotos, folder, from, to, toast, onNeedLogin, onNeedSubscribe]
   );
 
+  const revealGallery = useCallback(() => {
+    const mode = lastMode.current;
+    const data = result;
+    if (!mode || !data) return;
+    if (mode === "sample" && (data.portraits?.length || data.landscapes?.length)) {
+      setGallery("sample");
+      return;
+    }
+    if (mode === "top10" && data.top10?.length) setGallery("top10");
+  }, [result]);
   const closeGallery = useCallback(() => setGallery(null), []);
   const openSampleGallery = useCallback(() => {
     if (result?.portraits?.length || result?.landscapes?.length) setGallery("sample");
@@ -195,10 +217,12 @@ export function useRank({ files, preview, me, toast, onNeedLogin, onNeedSubscrib
     setConsent,
     status,
     loading,
+    fillPct,
     error,
     result,
     gallery,
     closeGallery,
+    revealGallery,
     openSampleGallery,
     openTop10Gallery,
     months,

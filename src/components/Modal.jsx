@@ -9,6 +9,7 @@ import { useEffect, useId } from "react";
  *   closeLabel?: string | null,
  *   layer?: "base" | "top",
  *   size?: "base" | "wide",
+ *   bare?: boolean,
  * }} props
  */
 export function Modal({
@@ -19,6 +20,7 @@ export function Modal({
   closeLabel = "확인",
   layer = "base",
   size = "base",
+  bare = false,
 }) {
   const titleId = useId();
 
@@ -35,7 +37,7 @@ export function Modal({
 
   return (
     <div
-      className={`modal${layer === "top" ? " modal--top" : ""}${size === "wide" ? " modal--wide" : ""}`}
+      className={`modal${layer === "top" ? " modal--top" : ""}${size === "wide" ? " modal--wide" : ""}${bare ? " modal--bare" : ""}`}
     >
       <div className="modal__backdrop" onClick={onClose} />
       <div

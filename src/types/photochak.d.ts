@@ -75,6 +75,12 @@ export type ModalView =
       skipped: SkippedItem[];
     };
 
+declare module "react" {
+  interface CSSProperties {
+    "--fill"?: string | number;
+  }
+}
+
 declare global {
   interface Window {
     showDirectoryPicker(options?: {

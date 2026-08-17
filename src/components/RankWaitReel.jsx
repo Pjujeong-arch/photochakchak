@@ -1,31 +1,84 @@
-const POMES = [
-  { src: "/img/runway/pome-act-idle.png", alt: "대기하는 크림 포메" },
-  { src: "/img/runway/pome-act-run.png", alt: "달리는 크림 포메" },
-  { src: "/img/runway/pome-act-jump.png", alt: "점프하는 크림 포메" },
-  { src: "/img/runway/pome-act-cute.png", alt: "재롱 부리는 크림 포메" },
-  { src: "/img/runway/pome-act-highfive.png", alt: "하이파이브하는 크림 포메" },
-  { src: "/img/runway/pome-act-bark.png", alt: "짖는 크림 포메" },
-  { src: "/img/runway/pome-act-eat.png", alt: "밥 먹는 크림 포메" },
-  { src: "/img/runway/pome-act-drink.png", alt: "물 마시는 크림 포메" },
-  { src: "/img/runway/pome-act-lie.png", alt: "눕는 크림 포메" },
-  { src: "/img/runway/pome-act-sleep.png", alt: "잠든 크림 포메" },
-  { src: "/img/runway/pome-act-playdead.png", alt: "죽는 시늉하는 크림 포메" },
-];
+import { useEffect, useRef, useState } from "react";
+
+const STEP = 10;
+const HOLD = 70;
+const STEP_MS = 320;
+const FINALE_MS = 3000;
+const GLEAM_BEFORE_MS = 2000;
+
+function holdTarget(pct) {
+  return Math.min(HOLD, Math.round(Math.max(0, pct) / STEP) * STEP);
+}
 
 /**
- * @param {{ status?: string }} props
+ * @param {{
+ *   status?: string,
+ *   pct?: number,
+ *   loading?: boolean,
+ *   onFilled?: () => void,
+ * }} props
  */
-export function RankWaitReel({ status = "" }) {
-  const strip = POMES.concat(POMES);
+export function RankWaitReel({
+  status = "",
+  pct = 0,
+  loading = true,
+  onFilled,
+}) {
+  const [fill, setFill] = useState(0);
+  const [gleam, setGleam] = useState(false);
+  const [done, setDone] = useState(false);
+  const fillRef = useRef(0);
+  fillRef.current = fill;
+
+  useEffect(() => {
+    if (!loading || done) return undefined;
+    const target = holdTarget(pct);
+    if (fill >= target) return undefined;
+    const t = window.setTimeout(() => {
+      setFill((n) => Math.min(target, n + STEP));
+    }, STEP_MS);
+    return () => window.clearTimeout(t);
+  }, [loading, pct, fill, done]);
+
+  useEffect(() => {
+    if (loading) return undefined;
+    const from = fillRef.current;
+    const t0 = Date.now();
+    const id = window.setInterval(() => {
+      const elapsed = Date.now() - t0;
+      const p = Math.min(1, elapsed / FINALE_MS);
+      setFill(Math.min(100, Math.ceil((from + (100 - from) * p) / STEP) * STEP));
+      setGleam(FINALE_MS - elapsed <= GLEAM_BEFORE_MS);
+      if (p >= 1) {
+        window.clearInterval(id);
+        setFill(100);
+        setDone(true);
+      }
+    }, 80);
+    return () => window.clearInterval(id);
+  }, [loading]);
+
+  useEffect(() => {
+    if (!done) return undefined;
+    const t = window.setTimeout(() => onFilled?.(), 720);
+    return () => window.clearTimeout(t);
+  }, [done, onFilled]);
 
   return (
-    <div className="rank-wait">
-      <div className="rank-wait__stage" aria-hidden="true">
-        <div className="rank-wait__roll">
-          {strip.map((shot, i) => (
-            <img key={`${shot.src}-${i}`} src={shot.src} alt="" />
-          ))}
-        </div>
+    <div className={`rank-wait${gleam ? " is-gleam" : ""}${done ? " is-done" : ""}`}>
+      <div
+        className="rank-wait__pome"
+        aria-hidden="true"
+        style={{ "--fill": `${fill}%` }}
+      >
+        <span className="rank-wait__paint" />
+        <span className="rank-wait__outline" />
+        <img
+          className="rank-wait__photo"
+          src="/img/runway/pome-act-idle.png"
+          alt=""
+        />
+        <span className="rank-wait__eye" />
       </div>
       <p className="rank-wait__status" aria-live="polite">
         {status || "Gemini가 축소본을 읽는 중…"}

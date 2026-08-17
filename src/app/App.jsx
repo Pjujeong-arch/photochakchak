@@ -81,6 +81,34 @@ export default function App() {
     onNeedLogin: openLoginModal,
     onNeedSubscribe: openOffer,
   });
+  const [waitOpen, setWaitOpen] = useState(false);
+  const [waitKey, setWaitKey] = useState(0);
+  const waitFilled = useRef(true);
+  const rankLoading = useRef(false);
+  rankLoading.current = rank.loading;
+
+  useEffect(() => {
+    if (!rank.loading) return;
+    waitFilled.current = false;
+    setWaitKey((n) => n + 1);
+    setWaitOpen(true);
+  }, [rank.loading]);
+
+  const revealGallery = rank.revealGallery;
+  const finishWait = useCallback(() => {
+    setWaitOpen(false);
+    revealGallery();
+  }, [revealGallery]);
+
+  useEffect(() => {
+    if (rank.loading || !waitFilled.current || !waitOpen) return;
+    finishWait();
+  }, [rank.loading, waitOpen, finishWait]);
+
+  const onWaitFilled = useCallback(() => {
+    waitFilled.current = true;
+    if (!rankLoading.current) finishWait();
+  }, [finishWait]);
 
   useEffect(() => {
     clearPreview();
@@ -163,7 +191,8 @@ export default function App() {
                   loginOpen ||
                   offerOpen ||
                   Boolean(rank.gallery) ||
-                  rank.loading
+                  rank.loading ||
+                  waitOpen
                 }
               />
             </div>
@@ -243,13 +272,20 @@ export default function App() {
         </div>
       </Modal>
       <Modal
-        open={rank.loading}
+        open={waitOpen}
         title="포메가 사진을 보는 중"
         onClose={() => {}}
         closeLabel={null}
         layer="top"
+        bare
       >
-        <RankWaitReel status={rank.status} />
+        <RankWaitReel
+          key={waitKey}
+          status={rank.status}
+          pct={rank.fillPct}
+          loading={rank.loading}
+          onFilled={onWaitFilled}
+        />
       </Modal>
       <Modal
         open={Boolean(rank.gallery && rank.result)}
