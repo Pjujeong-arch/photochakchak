@@ -14,5 +14,5 @@
     "noUnusedParameters": true,
     "types": ["node"]
   },
-  "include": ["src/server.js", "src/cli.js", "src/lib/classify.js", "src/lib/stay-awake.js", "scripts/**/*.js"]
+  "include": ["src/server.js", "src/cli.js", "src/lib/classify.js", "src/lib/stay-awake.js", "src/api/**/*.js"]
 }

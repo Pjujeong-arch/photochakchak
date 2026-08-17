@@ -1,18 +1,43 @@
+# Dependencies & caches
 node_modules/
+.npm/
+.pnpm-store/
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+.pytest_cache/
+.turbo/
+.cache/
+
+# Env & secrets (never commit)
 .env
+.env.local
+.env.*.local
 .env.*
 !.env.example
 *.lic
+*.pem
+*.p12
+credentials.json
+service-account*.json
+firebase-adminsdk*.json
+
+# Build outputs
+build/
+dist/
+.next/
+out/
+coverage/
+
+# Test / local data
 _premium_test/
 _testdata/
 _testdata2/
+.photochak_last_run.json
+
+# OS / editor
 Thumbs.db
 desktop.ini
 .DS_Store
-.photochak_last_run.json
-dist/
-
+*.log

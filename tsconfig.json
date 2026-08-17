@@ -4,6 +4,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "jsx": "react-jsx",
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
@@ -12,17 +13,15 @@
     "skipLibCheck": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": []
+    "types": ["vite/client"]
   },
   "include": [
-    "src/app/**/*.js",
-    "src/components/**/*.js",
-    "src/hooks/**/*.js",
-    "src/services/**/*.js",
-    "src/lib/dom.js",
-    "src/lib/html.js",
-    "src/lib/time.js",
-    "src/lib/index.js",
-    "src/types/**/*.d.ts"
+    "src/app",
+    "src/components",
+    "src/hooks",
+    "src/services",
+    "src/utils",
+    "src/types",
+    "vite.config.js"
   ]
 }

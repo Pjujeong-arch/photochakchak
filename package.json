@@ -1,23 +1,39 @@
 {
   "name": "photochakchak",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "포토착착 — 사진·영상을 연월 폴더로 복사 정리",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node src/server.js",
+    "dev:web": "vite",
     "start": "node src/server.js",
-    "dev": "node src/server.js",
     "preview": "node src/cli.js preview",
     "sort": "node src/cli.js copy",
     "undo": "node src/cli.js undo",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
-    "build": "npm run lint && npm run typecheck && node scripts/build.js"
+    "build": "npm run lint && npm run typecheck && vite build"
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@types/node": "^24.2.0",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.0",
     "eslint": "^9.32.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^16.3.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vite": "^7.0.6"
   }
 }

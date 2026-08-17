@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>포토착착 — MVP 사진 정돈</title>
+    <meta
+      name="description"
+      content="EXIF·파일명·파일일로 연월 정리. 미리보기, 중복 스킵, 실행 취소. 원본은 복사만."
+    />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin="anonymous"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div id="root">
+      <p class="boot-fallback">
+        포토착착을 불러오는 중…<br />
+        화면이 비면 터미널에서 <code>npm run dev</code> 후
+        <a href="http://localhost:5173/">http://localhost:5173</a> 을 여세요.
+        (<code>index.html</code> 파일을 직접 열면 화면이 비어 있습니다.)
+      </p>
+    </div>
+    <noscript>
+      <p class="boot-fallback">JavaScript를 켜야 포토착착을 쓸 수 있습니다.</p>
+    </noscript>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script type="module" src="/src/app/main.jsx"></script>
+  </body>
+</html>
