@@ -4,13 +4,13 @@
 코드는 최소량, 경계가 분명하고, 보안을 기본값으로 둔다.
 
 ## Slim
-- `src/components` = UI만. `src/hooks` = 상태. `src/services` = 분류·복사. `src/lib` = 유틸.
-- 브라우저 import는 `lib/index.js`, `services/index.js`를 단일 진입점으로 쓴다.
+- `src/components` = UI(JSX)만. `src/hooks` = 상태. `src/services` = 분류·복사·API. `src/utils` = 유틸.
+- 브라우저 import는 `utils/index.js`, `services/index.js`를 단일 진입점으로 쓴다.
 - 원본은 복사만, 이동·삭제 금지.
-- Next.js / React / RSC / Zod / Supabase는 그 스택을 도입할 때만 적용한다.
+- Next.js App Router는 도입을 요청한 뒤에만. 현재 웹은 Vite+React.
 
 ## Security
 - 시크릿은 `process.env`만. `.env`는 Git 금지.
 - 경로 탈출 차단. 저장 폴더는 원본과 달라야 한다.
 - HTML에 파일명·경로는 이스케이프.
-- API를 만들면 입력 검증. DB를 붙이면 RLS.
+- API를 만들면 입력 검증. DB는 Firebase만 쓰고 Security Rules로 본인 데이터만 CRUD.

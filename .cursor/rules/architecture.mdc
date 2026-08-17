@@ -5,20 +5,23 @@ alwaysApply: true
 
 # Slim & Clean
 
-스택은 Next.js가 아니다. 웹은 바닐라 ES 모듈, CLI는 Node, 데스크톱은 Python이다.
+웹은 React(Vite) + JSX, API/CLI는 Node, 데스크톱은 Python이다.
 
 ```
-public/          HTML·CSS·이미지
-src/app          부트스트랩만 (DOM 조회 + 훅 연결)
-src/components   UI 렌더만 (토스트, 모달, 폴더 버튼, 릴, 크롬)
-src/hooks        상태·이벤트·진행률
-src/services     분류·복사·ZIP·실행취소 (브라우저 단일 진입: services/index.js)
-src/lib          공용 유틸 (브라우저: lib/index.js, Node: classify.js·stay-awake.js)
-src/types        JSDoc용 타입
-desktop/         photosorting.py
+index.html           Vite 진입
+public/              정적 CSS·이미지
+src/app              부트스트랩·App 조합만
+src/components       UI 렌더만 (JSX, SRP)
+src/hooks            상태·이벤트·진행률
+src/services         분류·복사·ZIP·구독 API (단일 진입: services/index.js)
+src/utils            공용 유틸 (단일 진입: utils/index.js)
+src/types            타입
+src/api              Node 구독·Gemini API
+src/lib              Node CLI용 classify·stay-awake
+desktop/             photosorting.py
 ```
 
-- 컴포넌트에 해시·EXIF·복사 루프를 넣지 않는다. `services/sort-engine.js` 또는 `lib/`에 둔다.
-- API·유틸은 `services/index.js`, `lib/index.js`를 통해서만 import한다.
+- 컴포넌트에 해시·EXIF·복사 루프를 넣지 않는다. `services/` 또는 `utils/`에 둔다.
+- 브라우저 import는 `services/index.js`, `utils/index.js`, `hooks/index.js`, `components/index.js`를 단일 진입점으로 쓴다.
+- JSX는 단일 루트, camelCase 속성, 셀프 클로징을 지킨다.
 - 같은 날짜/폴더 규칙은 브라우저(`sort-engine`)와 CLI(`lib/classify.js`)가 어긋나지 않게 맞춘다.
-- React/Next는 사용자가 그 스택을 요청한 뒤에만 쓴다.
