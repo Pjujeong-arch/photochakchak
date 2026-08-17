@@ -115,7 +115,9 @@ export function useSubscribe(toast) {
         if (!cancelled) {
           setClientId(cfg.googleClientId || "");
           if (!cfg.googleClientId) {
-            setError("GOOGLE_CLIENT_ID가 .env.local에 없습니다.");
+            setError(
+              "구글 로그인 설정이 없습니다. 로컬은 .env.local, 배포는 Vercel Environment Variables에 GOOGLE_CLIENT_ID를 넣으세요."
+            );
           }
         }
       } catch (err) {
