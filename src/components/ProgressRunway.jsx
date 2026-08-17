@@ -32,10 +32,13 @@ export function ProgressRunway({
 
   useEffect(() => {
     const el = pomeRef.current;
-    if (!el || !el.parentElement) return;
-    const max = Math.max(0, el.parentElement.clientWidth - el.offsetWidth);
-    el.style.left = `${(pct / 100) * max}px`;
-  }, [pct, busy, donePose, suppressed]);
+    const track = el?.parentElement;
+    if (!el || !track) return;
+    const size = showBig ? 118 : 59;
+    const max = Math.max(0, track.clientWidth - size);
+    const ratio = Math.max(0, Math.min(1, pct / 100));
+    el.style.left = `${ratio * max}px`;
+  }, [pct, busy, donePose, suppressed, showBig]);
 
   useEffect(() => {
     const href = actUrl(poseAct);

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 const SHOTS = [
   {
     key: "a",
-    src: "img/pome-2024-03.png",
+    src: "/img/pome-2024-03.png",
     alt: "봄 포메라이언",
     tab: "2024-03",
     video: false,
@@ -11,7 +11,7 @@ const SHOTS = [
   },
   {
     key: "b",
-    src: "img/pome-2024-11.png",
+    src: "/img/pome-2024-11.png",
     alt: "가을 포메라이언 영상",
     tab: "2024-11",
     video: true,
@@ -19,7 +19,7 @@ const SHOTS = [
   },
   {
     key: "c",
-    src: "img/pome-2025-01.png",
+    src: "/img/pome-2025-01.png",
     alt: "날짜 없는 포메라이언",
     tab: "미분류",
     video: false,

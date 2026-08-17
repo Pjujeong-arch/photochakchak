@@ -16,7 +16,7 @@ const ACTS = [
 ];
 
 function actUrl(id) {
-  return new URL(`img/runway/pome-act-${id}.png`, document.baseURI).href;
+  return `/img/runway/pome-act-${id}.png`;
 }
 
 export function useProgress() {
