@@ -2,21 +2,27 @@ import { Component } from "react";
 
 /** Catches render crashes so the screen is never a silent blank. */
 export class ErrorBoundary extends Component {
+  /** @param {object} props */
   constructor(props) {
     super(props);
+    /** @type {{ error: unknown }} */
     this.state = { error: null };
   }
 
+  /**
+   * @param {unknown} error
+   */
   static getDerivedStateFromError(error) {
     return { error };
   }
 
   render() {
     if (this.state.error) {
+      const err = this.state.error;
       const message =
-        this.state.error instanceof Error
-          ? this.state.error.message
-          : String(this.state.error);
+        err && typeof err === "object" && "message" in err
+          ? String(err.message)
+          : String(err);
       return (
         <div className="layout" style={{ padding: 24 }}>
           <h1 className="app-title">화면을 그리지 못했습니다</h1>

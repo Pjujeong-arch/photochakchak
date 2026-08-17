@@ -88,7 +88,14 @@ declare global {
           }): void;
           renderButton(
             el: Element,
-            opts: { theme?: string; size?: string; text?: string; width?: number }
+            opts: {
+              theme?: string;
+              size?: string;
+              text?: string;
+              shape?: string;
+              width?: number;
+              logo_alignment?: string;
+            }
           ): void;
         };
       };
