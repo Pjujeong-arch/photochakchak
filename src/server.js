@@ -70,6 +70,7 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, {
           "Content-Type": type,
           "Cache-Control": isImg ? "public, max-age=86400" : "no-cache",
+          "Access-Control-Allow-Origin": "*",
         });
         fs.createReadStream(filePath).pipe(res);
       });
@@ -78,6 +79,14 @@ const server = http.createServer((req, res) => {
       res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
       res.end(JSON.stringify({ error: "server_error" }));
     });
+});
+
+server.on("error", (err) => {
+  if (err && err.code === "EADDRINUSE") {
+    console.log(`이미 실행 중: http://localhost:${PORT}`);
+    process.exit(0);
+  }
+  throw err;
 });
 
 server.listen(PORT, () => {

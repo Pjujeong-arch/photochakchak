@@ -25,5 +25,13 @@
     </noscript>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script type="module" src="/src/app/main.jsx"></script>
+    <script>
+      window.setTimeout(function () {
+        var el = document.querySelector("#root > .boot-fallback");
+        if (!el) return;
+        el.innerHTML =
+          '화면을 불러오지 못했습니다. 브라우저에서 <a href="http://localhost:5173/">http://localhost:5173</a> 을 여세요.';
+      }, 8000);
+    </script>
   </body>
 </html>
