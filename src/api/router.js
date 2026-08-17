@@ -46,7 +46,7 @@ async function handleApi(req, res) {
   }
 
   if (method === "POST" && path === "/api/auth/logout") {
-    clearSession(req);
+    clearSession();
     sendJson(res, 200, { ok: true }, { "Set-Cookie": cookieHeader("", true) });
     return true;
   }

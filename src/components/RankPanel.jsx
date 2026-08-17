@@ -77,42 +77,44 @@ export function RankPanel({
             ))}
           </select>
         </label>
-        <label>
-          시작일
-          <input
-            type="date"
-            value={from}
-            disabled={loading}
-            onChange={(e) => onFrom(e.target.value)}
-          />
-        </label>
-        <label>
-          종료일
-          <input
-            type="date"
-            value={to}
-            disabled={loading}
-            onChange={(e) => onTo(e.target.value)}
-          />
-        </label>
+        {[
+          { label: "시작일", value: from, onChange: onFrom },
+          { label: "종료일", value: to, onChange: onTo },
+        ].map((row) => (
+          <label key={row.label}>
+            {row.label}
+            <input
+              type="date"
+              value={row.value}
+              disabled={loading}
+              onChange={(e) => row.onChange(e.target.value)}
+            />
+          </label>
+        ))}
       </div>
       <div className="rank-actions">
-        <button
-          className="btn btn--safe"
-          type="button"
-          disabled={loading}
-          onClick={onSample}
-        >
-          {loading ? "추천 중…" : "샘플 추천 (인물 3 · 풍경 3)"}
-        </button>
-        <button
-          className="btn btn--start"
-          type="button"
-          disabled={loading}
-          onClick={onTop10}
-        >
-          {loading ? "분석 중…" : "베스트 10 (최대 20장 시연)"}
-        </button>
+        {[
+          {
+            className: "btn btn--safe",
+            onClick: onSample,
+            label: loading ? "추천 중…" : "샘플 추천 (인물 3 · 풍경 3)",
+          },
+          {
+            className: "btn btn--start",
+            onClick: onTop10,
+            label: loading ? "분석 중…" : "베스트 10 (최대 20장 시연)",
+          },
+        ].map((btn) => (
+          <button
+            key={btn.className}
+            className={btn.className}
+            type="button"
+            disabled={loading}
+            onClick={btn.onClick}
+          >
+            {btn.label}
+          </button>
+        ))}
       </div>
       {loading ? (
         <p className="rank-status rank-status--loading" aria-live="polite">
@@ -127,16 +129,21 @@ export function RankPanel({
         </p>
       ) : null}
       <div className="rank-actions rank-actions--view">
-        {result ? (
-          <>
-            <button className="btn btn--ghost" type="button" onClick={onOpenSample}>
-              샘플 창 다시 보기
-            </button>
-            <button className="btn btn--ghost" type="button" onClick={onOpenTop10}>
-              베스트 10 창 다시 보기
-            </button>
-          </>
-        ) : null}
+        {result
+          ? [
+              { label: "샘플 창 다시 보기", onClick: onOpenSample },
+              { label: "베스트 10 창 다시 보기", onClick: onOpenTop10 },
+            ].map((btn) => (
+              <button
+                key={btn.label}
+                className="btn btn--ghost"
+                type="button"
+                onClick={btn.onClick}
+              >
+                {btn.label}
+              </button>
+            ))
+          : null}
         <button className="btn btn--ghost" type="button" onClick={onOpenSubscribe}>
           구독 안내
         </button>

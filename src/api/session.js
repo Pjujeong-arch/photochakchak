@@ -70,9 +70,7 @@ function activateSubscribe(req) {
   return { user: row, sid: sign(row) };
 }
 
-function clearSession() {
-  /* cookie is cleared via Set-Cookie */
-}
+function clearSession() {}
 
 function cookieHeader(sid, clear) {
   const secure = process.env.VERCEL ? "; Secure" : "";

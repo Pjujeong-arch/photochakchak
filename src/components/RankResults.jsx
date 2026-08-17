@@ -1,3 +1,21 @@
+const GROUPS = {
+  sample: [
+    { key: "portraits", title: "인물 샘플" },
+    { key: "landscapes", title: "풍경 샘플" },
+  ],
+  top10: [{ key: "top10", title: "베스트 10" }],
+};
+
+/**
+ * @param {import('../types/photochak').RankResult} result
+ * @param {string} key
+ */
+function groupItems(result, key) {
+  if (key === "portraits") return result.portraits || [];
+  if (key === "landscapes") return result.landscapes || [];
+  return result.top10 || [];
+}
+
 /**
  * @param {{
  *   result: import('../types/photochak').RankResult,
@@ -7,30 +25,10 @@
  * }} props
  */
 export function RankResults({ result, mode, selected, onToggle }) {
-  const groups =
-    mode === "top10"
-      ? [{ key: "top10", title: "베스트 10" }]
-      : mode === "sample"
-        ? [
-            { key: "portraits", title: "인물 샘플" },
-            { key: "landscapes", title: "풍경 샘플" },
-          ]
-        : [
-            { key: "portraits", title: "인물 샘플" },
-            { key: "landscapes", title: "풍경 샘플" },
-            { key: "top10", title: "베스트 10" },
-          ];
-
   return (
     <>
-      {groups.map((group) => {
-        const items =
-          group.key === "portraits"
-            ? result.portraits
-            : group.key === "landscapes"
-              ? result.landscapes
-              : result.top10;
-        const list = Array.isArray(items) ? items : [];
+      {(GROUPS[mode] || GROUPS.sample).map((group) => {
+        const list = groupItems(result, group.key);
         if (!list.length) return null;
         return (
           <div key={group.key}>

@@ -82,7 +82,8 @@ const server = http.createServer((req, res) => {
 });
 
 server.on("error", (err) => {
-  if (err && err.code === "EADDRINUSE") {
+  const code = /** @type {NodeJS.ErrnoException} */ (err).code;
+  if (code === "EADDRINUSE") {
     console.log(`이미 실행 중: http://localhost:${PORT}`);
     process.exit(0);
   }

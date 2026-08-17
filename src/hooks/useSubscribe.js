@@ -119,7 +119,6 @@ export function useSubscribe(toast) {
     return () => window.clearInterval(wait);
   }, [ready, loading, clientId, me, renderButton]);
 
-  /** Call when the login button host mounts (e.g. modal opens). */
   const mountButton = useCallback(() => {
     if (!clientId || me?.email) return;
     window.requestAnimationFrame(() => renderButton());
@@ -164,7 +163,6 @@ export function useSubscribe(toast) {
     btnRef,
     logout,
     startPlan,
-    renderButton,
     mountButton,
     clientId,
     loading,

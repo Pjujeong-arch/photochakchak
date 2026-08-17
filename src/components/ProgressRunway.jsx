@@ -72,9 +72,9 @@ export function ProgressRunway({
         >
           <span className="pome__say">{poseSay}</span>
           <span className="pome__hearts">
-            <i />
-            <i />
-            <i />
+            {[0, 1, 2].map((i) => (
+              <i key={i} />
+            ))}
           </span>
           <span className="pome__halo" />
           <img

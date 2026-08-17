@@ -37,7 +37,9 @@ export function RankGallery({
   };
 
   const allOn = selected.size === items.length && items.length > 0;
-  const picks = items.filter((item) => selected.has(item.id) && item.file).map((item) => item.file);
+  const picks = items.flatMap((item) =>
+    selected.has(item.id) && item.file ? [item.file] : []
+  );
 
   return (
     <div className="rank-gallery">
