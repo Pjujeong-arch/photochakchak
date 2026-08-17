@@ -1,16 +1,21 @@
+const { loadEnv } = require("./api/env");
+loadEnv();
+
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { handleApi } = require("./api/router");
 
 const PORT = Number(process.env.PORT) || 4173;
+const DIST_ROOT = path.join(__dirname, "..", "dist");
 const PUBLIC_ROOT = path.join(__dirname, "..", "public");
-const SRC_ROOT = __dirname;
-const WEB_SRC = new Set(["app", "components", "hooks", "services", "lib", "types"]);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".map": "application/json; charset=utf-8",
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
@@ -18,6 +23,7 @@ const MIME = {
   ".svg": "image/svg+xml",
   ".json": "application/json; charset=utf-8",
   ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
 };
 
 function safeJoin(root, urlPath) {
@@ -32,41 +38,48 @@ function safeJoin(root, urlPath) {
 
 function resolveRequest(url) {
   const decoded = decodeURIComponent((url || "/").split("?")[0]);
+  const webRoot = fs.existsSync(DIST_ROOT) ? DIST_ROOT : PUBLIC_ROOT;
   if (decoded === "/" || decoded === "") {
-    return safeJoin(PUBLIC_ROOT, "/index.html");
+    return safeJoin(webRoot, "/index.html");
   }
-  if (decoded === "/src" || decoded.startsWith("/src/")) {
-    const rel = decoded.slice("/src".length).replace(/^[/\\]+/, "").replace(/\\/g, "/");
-    const top = rel.split("/")[0];
-    if (!WEB_SRC.has(top) || path.extname(rel).toLowerCase() !== ".js") return null;
-    return safeJoin(SRC_ROOT, "/" + rel);
+  const fromWeb = safeJoin(webRoot, decoded);
+  if (fromWeb && fs.existsSync(fromWeb) && fs.statSync(fromWeb).isFile()) {
+    return fromWeb;
   }
   return safeJoin(PUBLIC_ROOT, decoded);
 }
 
 const server = http.createServer((req, res) => {
-  const filePath = resolveRequest(req.url);
-  if (!filePath) {
-    res.writeHead(403);
-    res.end("Forbidden");
-    return;
-  }
-  fs.stat(filePath, (err, st) => {
-    if (err || !st.isFile()) {
-      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end("Not found");
-      return;
-    }
-    const type = MIME[path.extname(filePath).toLowerCase()] || "application/octet-stream";
-    const isImg = type.startsWith("image/");
-    res.writeHead(200, {
-      "Content-Type": type,
-      "Cache-Control": isImg ? "public, max-age=86400" : "no-cache",
+  handleApi(req, res)
+    .then((hit) => {
+      if (hit) return;
+      const filePath = resolveRequest(req.url);
+      if (!filePath) {
+        res.writeHead(403);
+        res.end("Forbidden");
+        return;
+      }
+      fs.stat(filePath, (err, st) => {
+        if (err || !st.isFile()) {
+          res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+          res.end("Not found — npm run build 후 npm start, 또는 npm run dev");
+          return;
+        }
+        const type = MIME[path.extname(filePath).toLowerCase()] || "application/octet-stream";
+        const isImg = type.startsWith("image/");
+        res.writeHead(200, {
+          "Content-Type": type,
+          "Cache-Control": isImg ? "public, max-age=86400" : "no-cache",
+        });
+        fs.createReadStream(filePath).pipe(res);
+      });
+    })
+    .catch(() => {
+      res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ error: "server_error" }));
     });
-    fs.createReadStream(filePath).pipe(res);
-  });
 });
 
 server.listen(PORT, () => {
-  console.log(`포토착착: http://localhost:${PORT}`);
+  console.log(`포토착착 API/정적: http://localhost:${PORT}`);
 });
