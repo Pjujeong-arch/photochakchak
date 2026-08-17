@@ -8,11 +8,23 @@ export function folderNameFromFiles(files) {
 }
 
 export function canPickDir() {
-  return typeof window.showDirectoryPicker === "function";
+  if (typeof window === "undefined" || typeof window.showDirectoryPicker !== "function") {
+    return false;
+  }
+  return !isPhoneLike();
 }
 
 export function canUseOpfs() {
   return typeof navigator !== "undefined" && typeof navigator.storage?.getDirectory === "function";
+}
+
+export function isPhoneLike() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  if (/iPhone|iPod|Android.+Mobile|webOS|BlackBerry|IEMobile/i.test(ua)) return true;
+  if (/iPad/i.test(ua)) return true;
+  if (navigator.platform === "MacIntel" && Number(navigator.maxTouchPoints || 0) > 1) return true;
+  return false;
 }
 
 /** @returns {string} */
@@ -24,30 +36,31 @@ export function destFolderName() {
   return `포토착착_${y}-${m}-${d}`;
 }
 
-/** @returns {Promise<FileSystemDirectoryHandle | null>} */
-export async function pickCopyFolder() {
+/**
+ * @param {string} folderName
+ * @returns {Promise<{ handle: FileSystemDirectoryHandle, label: string, via: "picker" | "opfs" } | null>}
+ */
+export async function pickOrCreateDestFolder(folderName) {
   if (canPickDir()) {
     try {
-      try {
-        return await window.showDirectoryPicker({
-          mode: "readwrite",
-          startIn: "downloads",
-        });
-      } catch (err) {
-        if (/** @type {{ name?: string }} */ (err).name === "AbortError") return null;
-        return await window.showDirectoryPicker({ mode: "readwrite" });
-      }
+      const parent = await window.showDirectoryPicker({ mode: "readwrite" });
+      const handle = await parent.getDirectoryHandle(folderName, { create: true });
+      return { handle, label: `${parent.name}/${folderName}`, via: "picker" };
     } catch (err) {
       if (/** @type {{ name?: string }} */ (err).name === "AbortError") return null;
-      throw err;
     }
   }
-  if (canUseOpfs()) {
-    if (navigator.storage?.persist) await navigator.storage.persist().catch(() => false);
-    const root = await navigator.storage.getDirectory();
-    return root.getDirectoryHandle("포토착착_베스트", { create: true });
-  }
-  throw new Error("no_dest");
+  if (!canUseOpfs()) throw new Error("no_dest");
+  if (navigator.storage?.persist) await navigator.storage.persist().catch(() => false);
+  const root = await navigator.storage.getDirectory();
+  const handle = await root.getDirectoryHandle(folderName, { create: true });
+  return { handle, label: folderName, via: "opfs" };
+}
+
+/** @returns {Promise<FileSystemDirectoryHandle | null>} */
+export async function pickCopyFolder() {
+  const picked = await pickOrCreateDestFolder("포토착착_베스트");
+  return picked ? picked.handle : null;
 }
 
 /** @param {File} file */
