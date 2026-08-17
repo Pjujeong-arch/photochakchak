@@ -2,6 +2,10 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/api/auth/google", "destination": "/api/login" },
+    { "source": "/api/auth/logout", "destination": "/api/logout" }
+  ],
   "headers": [
     {
       "source": "/css/(.*)",

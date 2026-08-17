@@ -1,3 +1,3 @@
 const { vercelHandler } = require("../src/api/vercel");
 
-module.exports = vercelHandler();
+module.exports = vercelHandler("/api/logout");

@@ -51,7 +51,7 @@ export async function requestJson<T = unknown>(
   if (!res.ok) {
     const fallback =
       res.status === 404
-        ? "로그인 API(/api)가 없습니다. 로컬은 npm run dev, 배포는 Vercel 함수와 GOOGLE_CLIENT_ID가 필요합니다."
+        ? "로그인 API를 찾지 못했습니다. 로컬은 npm run dev, 배포는 최신 버전을 올린 뒤 다시 시도해 주세요."
         : `요청 실패 (${res.status})`;
     throw new ApiError(
       typeof data.error === "string" ? data.error : fallback,

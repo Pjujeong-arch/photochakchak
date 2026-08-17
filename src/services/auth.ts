@@ -22,14 +22,14 @@ export function fetchSession() {
 
 /** Exchange Google ID token for an HttpOnly session cookie. */
 export function loginWithGoogleCredential(credential: string) {
-  return requestJson<AuthSession>("/api/auth/google", {
+  return requestJson<AuthSession>("/api/login", {
     method: "POST",
     body: { credential: String(credential || "") },
   });
 }
 
 export function logoutSession() {
-  return requestJson<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
+  return requestJson<{ ok: boolean }>("/api/logout", { method: "POST" });
 }
 
 /** Local/demo: mark the logged-in session as subscribed. Production should use a payment webhook. */

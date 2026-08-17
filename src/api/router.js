@@ -1,4 +1,5 @@
 const { readJson, sendJson, ymd, monthKey } = require("./http");
+const { googleClientId, missingGoogleClientIdError } = require("./env");
 const { getSession, createSession, activateSubscribe, clearSession, cookieHeader } = require("./session");
 const { verifyGoogleCredential } = require("./google-auth");
 const { rankWithGemini } = require("./gemini-rank");
@@ -6,15 +7,28 @@ const { rankWithGemini } = require("./gemini-rank");
 const lastCall = new Map();
 
 function route(req) {
-  const decoded = decodeURIComponent((req.url || "/").split("?")[0]);
-  return { method: req.method || "GET", path: decoded };
+  let raw = String(req.url || "/");
+  try {
+    if (/^https?:/i.test(raw)) raw = new URL(raw).pathname;
+  } catch {
+    /* keep raw */
+  }
+  let path = decodeURIComponent(raw.split("?")[0]);
+  if (!path.startsWith("/")) path = `/${path}`;
+  if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+  if (!path.startsWith("/api")) path = `/api${path}`;
+  return { method: req.method || "GET", path };
+}
+
+function postPath(method, path, ...names) {
+  return method === "POST" && names.includes(path);
 }
 
 async function handleApi(req, res) {
   const { method, path } = route(req);
 
   if (method === "GET" && path === "/api/config") {
-    const clientId = process.env.GOOGLE_CLIENT_ID || "";
+    const clientId = googleClientId();
     sendJson(res, 200, {
       googleClientId: clientId,
       authReady: Boolean(clientId),
@@ -28,10 +42,10 @@ async function handleApi(req, res) {
     return true;
   }
 
-  if (method === "POST" && path === "/api/auth/google") {
-    const clientId = process.env.GOOGLE_CLIENT_ID || "";
+  if (postPath(method, path, "/api/login", "/api/auth/google")) {
+    const clientId = googleClientId();
     if (!clientId) {
-      sendJson(res, 503, { error: "GOOGLE_CLIENT_ID가 .env.local에 없습니다." });
+      sendJson(res, 503, { error: missingGoogleClientIdError() });
       return true;
     }
     try {
@@ -45,7 +59,7 @@ async function handleApi(req, res) {
     return true;
   }
 
-  if (method === "POST" && path === "/api/auth/logout") {
+  if (postPath(method, path, "/api/logout", "/api/auth/logout")) {
     clearSession();
     sendJson(res, 200, { ok: true }, { "Set-Cookie": cookieHeader("", true) });
     return true;
