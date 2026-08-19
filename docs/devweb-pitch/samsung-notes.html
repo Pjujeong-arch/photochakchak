@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>삼성 노트로 열기 — 포토착착 발표 4장</title>
+    <style>
+      :root {
+        --bg: #f7eee6;
+        --ink: #3b2f2a;
+        --accent: #e06b4f;
+        --olive: #4f7d68;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: "Apple SD Gothic Neo", Pretendard, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+      }
+      h1 { font-size: 1.45rem; margin: 0 0 8px; }
+      p.lead { margin: 0 0 20px; line-height: 1.5; color: #5c4e48; }
+      a.btn {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 16px;
+        padding: 16px 18px;
+        font-weight: 800;
+        margin: 0 0 10px;
+        font-size: 1.05rem;
+      }
+      .primary { background: var(--accent); color: #fff8f3; }
+      .secondary { background: var(--olive); color: #f3faf7; }
+      .ghost { background: #fff8f3; color: var(--ink); border: 1px solid #ead6c8; }
+      ol { padding-left: 1.2em; line-height: 1.55; color: #5c4e48; }
+      li { margin: 0 0 10px; }
+      img.qr { display: block; width: 180px; height: 180px; margin: 18px auto; background: #fff; padding: 8px; border-radius: 12px; }
+      .note { font-size: 0.9rem; color: #7a6a62; }
+    </style>
+  </head>
+  <body>
+    <h1>포토착착 발표 4장</h1>
+    <p class="lead">삼성 노트는 PDF를 가져옵니다. 갤럭시에서 아래 버튼을 누르면 저장 후 노트로 넘깁니다.</p>
+    <a class="btn primary" id="notes" href="#">삼성 노트로 열기</a>
+    <a class="btn secondary" id="dl" href="photochakchak-devweb-4p.pdf" download="포토착착-개발웹-발표-4장.pdf">PDF 저장</a>
+    <a class="btn ghost" id="ppt" href="photochakchak-devweb-4p.pptx" download="포토착착-개발웹-발표-4장.pptx">PPTX 저장</a>
+    <ol>
+      <li><b>삼성 노트로 열기</b>가 앱 선택창을 띄우면 <b>삼성 노트</b>를 고릅니다.</li>
+      <li>안 열리면 <b>PDF 저장</b> 후 <b>내 파일 → 다운로드</b>에서 파일을 길게 누르고 <b>삼성 노트</b>를 고릅니다.</li>
+      <li>삼성 노트 안에서는 <b>+ → PDF 가져오기</b>로 같은 파일을 골라도 됩니다.</li>
+    </ol>
+    <p class="note">PC면 아래 QR을 갤럭시 카메라로 찍으세요.</p>
+    <img class="qr" src="img/samsung-notes-qr.png" alt="PDF 다운로드 QR" />
+    <script>
+      var pdf =
+        "https://raw.githubusercontent.com/Pjujeong-arch/photochakchak/cursor/devweb-pitch-pdf-4p-14d5/docs/devweb-pitch/photochakchak-devweb-4p.pdf";
+      var pptx =
+        "https://raw.githubusercontent.com/Pjujeong-arch/photochakchak/cursor/devweb-pitch-pdf-4p-14d5/docs/devweb-pitch/photochakchak-devweb-4p.pptx";
+      var intent =
+        "intent://" +
+        pdf.replace(/^https:\/\//, "") +
+        "#Intent;scheme=https;action=android.intent.action.VIEW;type=application/pdf;package=com.samsung.android.app.notes;S.browser_fallback_url=" +
+        encodeURIComponent(pdf) +
+        ";end";
+      document.getElementById("dl").href = pdf;
+      document.getElementById("ppt").href = pptx;
+      document.getElementById("notes").href = intent;
+      var ua = navigator.userAgent || "";
+      if (/Android/i.test(ua)) {
+        window.location.replace(intent);
+      }
+    </script>
+  </body>
+</html>

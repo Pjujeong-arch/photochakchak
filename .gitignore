@@ -36,6 +36,9 @@ _testdata/
 _testdata2/
 .photochak_last_run.json
 
+# Presentation fonts downloaded at print time
+docs/devweb-pitch/fonts/
+
 # OS / editor
 Thumbs.db
 desktop.ini
