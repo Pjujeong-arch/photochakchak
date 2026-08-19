@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>포토착착 — 개발웹 발표 4장</title>
+    <style>
+      @font-face {
+        font-family: "Paperlogy";
+        src: url("fonts/Paperlogy-4Regular.woff2") format("woff2");
+        font-weight: 400;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Paperlogy";
+        src: url("fonts/Paperlogy-6SemiBold.woff2") format("woff2");
+        font-weight: 600;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Paperlogy";
+        src: url("fonts/Paperlogy-7Bold.woff2") format("woff2");
+        font-weight: 700;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Paperlogy";
+        src: url("fonts/Paperlogy-8ExtraBold.woff2") format("woff2");
+        font-weight: 800;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Pretendard Variable";
+        src: url("fonts/PretendardVariable.woff2") format("woff2");
+        font-weight: 45 920;
+        font-display: swap;
+      }
+
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        background: #d8c6b8;
+        color: #3b2f2a;
+        font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .deck {
+        width: 297mm;
+        margin: 0 auto;
+      }
+
+      .slide {
+        position: relative;
+        width: 297mm;
+        height: 210mm;
+        overflow: hidden;
+        background: #f7eee6;
+        page-break-after: always;
+        break-after: page;
+      }
+
+      .slide:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+
+      .glow {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .glow--warm {
+        width: 150mm;
+        height: 150mm;
+        background: radial-gradient(circle, #f8dccb 0%, transparent 68%);
+        top: -48mm;
+        right: -20mm;
+      }
+
+      .glow--mist {
+        width: 130mm;
+        height: 130mm;
+        background: radial-gradient(circle, #e7f1ea 0%, transparent 70%);
+        bottom: -40mm;
+        left: -18mm;
+      }
+
+      .pad {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        padding: 11mm 14mm 10mm;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .kicker {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 9.5pt;
+        letter-spacing: 0.08em;
+        color: #7a6a62;
+        font-weight: 600;
+      }
+
+      .kicker b {
+        color: #e06b4f;
+        font-family: "Paperlogy", sans-serif;
+        font-weight: 700;
+        letter-spacing: 0;
+        font-size: 11pt;
+      }
+
+      .pg {
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        color: #3b2f2a;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: "Paperlogy", sans-serif;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .rule {
+        height: 0.4mm;
+        background: #ead6c8;
+        margin: 4.5mm 0 6mm;
+        border: 0;
+      }
+
+      /* —— 1. 표지 —— */
+      .cover {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 8mm;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 4mm;
+        margin-bottom: 5mm;
+      }
+
+      .brand-row img.cam {
+        width: 12mm;
+        height: 12mm;
+        object-fit: cover;
+        border-radius: 3mm;
+        background: #fff8f3;
+        border: 0.35mm solid #ead6c8;
+      }
+
+      .eyebrow {
+        font-size: 12pt;
+        font-weight: 700;
+        color: #4f7d68;
+        letter-spacing: 0.04em;
+      }
+
+      .cover h1 {
+        font-size: 46pt;
+        line-height: 0.95;
+        color: #3b2f2a;
+      }
+
+      .cover h1 span {
+        display: block;
+        font-size: 18pt;
+        font-weight: 600;
+        color: #e06b4f;
+        margin-top: 3mm;
+        letter-spacing: -0.02em;
+      }
+
+      .lede {
+        margin-top: 7mm;
+        font-size: 13.5pt;
+        line-height: 1.55;
+        color: #3b2f2a;
+        max-width: 138mm;
+      }
+
+      .lede strong {
+        color: #c4563d;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2.4mm;
+        margin-top: 8mm;
+      }
+
+      .chip {
+        background: #fff8f3;
+        border: 0.3mm solid #ead6c8;
+        border-radius: 999px;
+        padding: 1.8mm 4mm;
+        font-size: 10pt;
+        font-weight: 600;
+        color: #3b2f2a;
+      }
+
+      .chip--accent {
+        background: #e06b4f;
+        border-color: #c4563d;
+        color: #fff8f3;
+      }
+
+      .chip--olive {
+        background: #4f7d68;
+        border-color: #3f6a57;
+        color: #f3faf7;
+      }
+
+      .cover-foot {
+        margin-top: auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 6mm;
+        padding-top: 6mm;
+        font-size: 10.5pt;
+        color: #7a6a62;
+      }
+
+      .cover-foot strong {
+        display: block;
+        color: #3b2f2a;
+        font-size: 12.5pt;
+        font-family: "Paperlogy", sans-serif;
+        font-weight: 700;
+        margin-bottom: 1mm;
+      }
+
+      .bins {
+        position: relative;
+        align-self: stretch;
+      }
+
+      .bin {
+        position: absolute;
+        width: 52mm;
+        background: #fff8f3;
+        border: 0.35mm solid #ead6c8;
+        border-radius: 4mm;
+        box-shadow: 0 4mm 10mm rgba(90, 48, 28, 0.1);
+        overflow: hidden;
+      }
+
+      .bin header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2mm 3mm;
+        font-size: 9pt;
+        font-weight: 700;
+        background: #fff4ec;
+        border-bottom: 0.3mm solid #ead6c8;
+      }
+
+      .bin header em {
+        font-style: normal;
+        color: #4f7d68;
+        font-size: 8pt;
+      }
+
+      .bin header .misc {
+        color: #c46b7a;
+      }
+
+      .bin img {
+        display: block;
+        width: 100%;
+        height: 48mm;
+        object-fit: cover;
+      }
+
+      .bin--a {
+        top: 4mm;
+        left: 2mm;
+        z-index: 1;
+        transform: rotate(-6deg);
+      }
+
+      .bin--b {
+        top: 28mm;
+        right: 4mm;
+        z-index: 2;
+        transform: rotate(5deg);
+      }
+
+      .bin--c {
+        bottom: 8mm;
+        left: 18mm;
+        z-index: 3;
+        transform: rotate(-2deg);
+        width: 50mm;
+      }
+
+      .pome-badge {
+        position: absolute;
+        right: 8mm;
+        bottom: 2mm;
+        width: 38mm;
+        height: 38mm;
+        border-radius: 50%;
+        background: #1a1410;
+        overflow: hidden;
+        border: 1.1mm solid #fff8f3;
+        box-shadow: 0 3mm 8mm rgba(90, 48, 28, 0.18);
+        z-index: 4;
+      }
+
+      .pome-badge img {
+        width: 118%;
+        height: 118%;
+        object-fit: cover;
+        object-position: 50% 18%;
+        margin-left: -9%;
+        margin-top: -4%;
+      }
+
+      /* —— 공통 본문 —— */
+      .title-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8mm;
+      }
+
+      .title-row h2 {
+        font-size: 22pt;
+        line-height: 1.15;
+      }
+
+      .title-row p {
+        font-size: 11pt;
+        color: #7a6a62;
+        max-width: 118mm;
+        text-align: right;
+        line-height: 1.4;
+      }
+
+      /* —— 2. 쓰기 —— */
+      .use {
+        display: grid;
+        grid-template-columns: 92mm 1fr;
+        gap: 7mm;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .pain {
+        display: flex;
+        flex-direction: column;
+        gap: 3.2mm;
+      }
+
+      .pain article {
+        background: #fff8f3;
+        border: 0.3mm solid #ead6c8;
+        border-radius: 4mm;
+        padding: 3.6mm 4mm 3.4mm 4.2mm;
+        border-left: 1.3mm solid #e06b4f;
+      }
+
+      .pain h3 {
+        font-size: 12pt;
+        margin-bottom: 1.2mm;
+      }
+
+      .pain p {
+        font-size: 10.2pt;
+        line-height: 1.45;
+        color: #5c4e48;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 3.2mm;
+      }
+
+      .step {
+        background: #fff8f3;
+        border: 0.3mm solid #ead6c8;
+        border-radius: 4.2mm;
+        padding: 4mm 4.2mm 3.6mm;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .step .n {
+        font-family: "Paperlogy", sans-serif;
+        font-weight: 800;
+        font-size: 10pt;
+        color: #e06b4f;
+        letter-spacing: 0.04em;
+      }
+
+      .step h3 {
+        font-size: 13pt;
+        margin: 1.4mm 0 1.6mm;
+      }
+
+      .step p {
+        font-size: 10.2pt;
+        line-height: 1.45;
+        color: #5c4e48;
+      }
+
+      .sort-bar {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+        gap: 2.4mm;
+        margin-top: 4.5mm;
+      }
+
+      .sort-bar div {
+        background: #fff8f3;
+        border: 0.3mm solid #ead6c8;
+        border-radius: 3.2mm;
+        padding: 2.6mm 3.2mm;
+      }
+
+      .sort-bar .lab {
+        font-size: 8pt;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: #7a6a62;
+        margin-bottom: 0.8mm;
+      }
+
+      .sort-bar b {
+        display: block;
+        font-family: "Paperlogy", sans-serif;
+        font-size: 12pt;
+        font-weight: 700;
+      }
+
+      .sort-bar .head {
+        background: #3b2f2a;
+        border-color: #3b2f2a;
+        color: #f7eee6;
+      }
+
+      .sort-bar .head .lab {
+        color: #e8cfc2;
+      }
+
+      .sort-bar .ok b {
+        color: #4f7d68;
+      }
+
+      .sort-bar .warn b {
+        color: #d4894a;
+      }
+
+      .sort-bar .bad b {
+        color: #c46b7a;
+      }
+
+      /* —— 3. 구조 —— */
+      .split2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4mm;
+      }
+
+      .panel {
+        background: #fff8f3;
+        border: 0.3mm solid #ead6c8;
+        border-radius: 4.5mm;
+        padding: 4.2mm 5mm 4mm;
+      }
+
+      .panel h3 {
+        font-size: 13.5pt;
+        margin-bottom: 1.4mm;
+      }
+
+      .price {
+        font-family: "Paperlogy", sans-serif;
+        font-size: 11pt;
+        color: #e06b4f;
+        font-weight: 700;
+        margin-bottom: 2.2mm;
+      }
+
+      .panel ul {
+        list-style: none;
+        font-size: 10.4pt;
+        line-height: 1.55;
+        color: #5c4e48;
+      }
+
+      .panel li {
+        padding-left: 4.2mm;
+        position: relative;
+        margin-bottom: 0.6mm;
+      }
+
+      .panel li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 2.1mm;
+        width: 1.8mm;
+        height: 1.8mm;
+        border-radius: 50%;
+        background: #e06b4f;
+      }
+
+      .panel--free li::before {
+        background: #4f7d68;
+      }
+
+      .arch {
+        display: grid;
+        grid-template-columns: 1.15fr 0.95fr 0.9fr;
+        gap: 3.2mm;
+        margin-top: 4mm;
+        flex: 1;
+      }
+
+      .col {
+        background: #fff8f3;
+        border: 0.3mm solid #ead6c8;
+        border-radius: 4.5mm;
+        padding: 4mm 4.4mm;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .col .tag {
+        align-self: flex-start;
+        font-size: 8.2pt;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #fff8f3;
+        background: #3b2f2a;
+        border-radius: 999px;
+        padding: 0.8mm 2.6mm;
+        margin-bottom: 2.4mm;
+      }
+
+      .col.api .tag {
+        background: #e06b4f;
+      }
+
+      .col.cli .tag {
+        background: #4f7d68;
+      }
+
+      .col h3 {
+        font-size: 13pt;
+        margin-bottom: 2mm;
+      }
+
+      .col p,
+      .col li {
+        font-size: 10.1pt;
+        line-height: 1.48;
+        color: #5c4e48;
+      }
+
+      .col ul {
+        list-style: none;
+      }
+
+      .col li {
+        margin: 0 0 1.4mm;
+        padding-left: 0;
+      }
+
+      .layers {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2.2mm;
+        margin-top: 3.6mm;
+      }
+
+      .layers div {
+        background: #3b2f2a;
+        color: #f7eee6;
+        border-radius: 3mm;
+        padding: 2.4mm 3mm;
+      }
+
+      .layers small {
+        display: block;
+        font-size: 7.6pt;
+        letter-spacing: 0.08em;
+        color: #e8cfc2;
+        margin-bottom: 0.6mm;
+        font-weight: 700;
+      }
+
+      .layers b {
+        font-family: "Paperlogy", sans-serif;
+        font-size: 10.5pt;
+        font-weight: 700;
+      }
+
+      /* —— 4. 보안·시연 —— */
+      .end {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 5mm;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .sec-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2.6mm;
+      }
+
+      .sec {
+        display: grid;
+        grid-template-columns: 7.2mm 1fr;
+        gap: 3mm;
+        align-items: start;
+        background: #fff8f3;
+        border: 0.3mm solid #ead6c8;
+        border-radius: 3.6mm;
+        padding: 2.8mm 3.6mm;
+      }
+
+      .sec i {
+        font-style: normal;
+        font-family: "Paperlogy", sans-serif;
+        font-weight: 800;
+        font-size: 11pt;
+        color: #4f7d68;
+        line-height: 1.2;
+      }
+
+      .sec h3 {
+        font-size: 11.5pt;
+        margin-bottom: 0.6mm;
+      }
+
+      .sec p {
+        font-size: 9.8pt;
+        line-height: 1.4;
+        color: #5c4e48;
+      }
+
+      .sec code,
+      .col code {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 8.6pt;
+        background: #f3e7dc;
+        padding: 0.2mm 1.2mm;
+        border-radius: 1mm;
+      }
+
+      .demo {
+        background: #3b2f2a;
+        color: #f7eee6;
+        border-radius: 5mm;
+        padding: 5mm 5.2mm 4.6mm;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .demo h3 {
+        font-size: 14pt;
+        color: #fff8f3;
+        margin-bottom: 1.2mm;
+      }
+
+      .demo .sub {
+        font-size: 10pt;
+        color: #e8cfc2;
+        margin-bottom: 4mm;
+      }
+
+      .beat {
+        display: grid;
+        grid-template-columns: 9mm 1fr;
+        gap: 2.4mm;
+        margin-bottom: 3mm;
+      }
+
+      .beat span {
+        font-family: "Paperlogy", sans-serif;
+        font-weight: 800;
+        color: #e06b4f;
+        font-size: 12pt;
+      }
+
+      .beat b {
+        display: block;
+        font-size: 11.5pt;
+        margin-bottom: 0.6mm;
+      }
+
+      .beat p {
+        font-size: 9.8pt;
+        color: #e4d4c8;
+        line-height: 1.4;
+      }
+
+      .close {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 4mm;
+        background: #fff8f3;
+        border-radius: 4mm;
+        padding: 3mm 3.4mm;
+        color: #3b2f2a;
+      }
+
+      .close img {
+        width: 16mm;
+        height: 16mm;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #1a1410;
+      }
+
+      .close p {
+        font-family: "Paperlogy", sans-serif;
+        font-size: 11pt;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+
+      .close small {
+        display: block;
+        font-family: "Pretendard Variable", sans-serif;
+        font-size: 8.5pt;
+        font-weight: 600;
+        color: #7a6a62;
+        margin-top: 0.8mm;
+      }
+
+      @media screen {
+        body {
+          padding: 8mm 0 16mm;
+        }
+
+        .slide {
+          margin: 0 auto 8mm;
+          box-shadow: 0 8px 28px rgba(90, 48, 28, 0.16);
+          border-radius: 2mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="deck">
+      <!-- 1 -->
+      <section class="slide">
+        <div class="glow glow--warm"></div>
+        <div class="glow glow--mist"></div>
+        <div class="pad">
+          <div class="kicker">
+            <span><b>포토착착</b> · 개발웹 발표</span>
+            <span class="pg">01 / 04</span>
+          </div>
+          <hr class="rule" />
+          <div class="cover">
+            <div>
+              <div class="brand-row">
+                <img class="cam" src="img/camera.jpg" alt="" />
+                <div class="eyebrow">사진 정리 웹 · MVP 1.2</div>
+              </div>
+              <h1>
+                포토착착
+                <span>원본은 그대로, 정리는 복사만.</span>
+              </h1>
+              <p class="lede">
+                쌓인 사진·영상을 <strong>EXIF → 파일명 → 파일일</strong> 순으로
+                읽어 <strong>YYYY-MM</strong> 폴더에 복사합니다. 브라우저에서
+                미리보고, 중복은 건너뛰고, 방금 복사한 것만 되돌립니다.
+              </p>
+              <div class="chips">
+                <span class="chip chip--accent">Vite + React</span>
+                <span class="chip chip--olive">Node API · Vercel</span>
+                <span class="chip">File System Access</span>
+                <span class="chip">Gemini 베스트 10</span>
+              </div>
+              <div class="cover-foot">
+                <div>
+                  <strong>개발웹 발표 4장</strong>
+                  문제 → 쓰기 → 구조 → 보안·시연
+                </div>
+                <div style="text-align: right">
+                  <strong>정석모</strong>
+                  동국대학교
+                </div>
+              </div>
+            </div>
+            <div class="bins">
+              <article class="bin bin--a">
+                <header>2024-03 <em>EXIF</em></header>
+                <img src="img/pome-2024-03.jpg" alt="봄 포메라이언" />
+              </article>
+              <article class="bin bin--b">
+                <header>2024-11 <em>영상</em></header>
+                <img src="img/pome-2024-11.jpg" alt="가을 포메라이언" />
+              </article>
+              <article class="bin bin--c">
+                <header>미분류 <em class="misc">날짜 없음</em></header>
+                <img src="img/pome-2025-01.jpg" alt="겨울 포메라이언" />
+              </article>
+              <div class="pome-badge">
+                <img src="img/pome-act-highfive.png" alt="" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 -->
+      <section class="slide">
+        <div class="glow glow--mist"></div>
+        <div class="pad">
+          <div class="kicker">
+            <span><b>포토착착</b> · 왜 만들고 어떻게 쓰나</span>
+            <span class="pg">02 / 04</span>
+          </div>
+          <div class="title-row">
+            <h2>앨범은 섞이고, 원본은 건드리면 안 된다</h2>
+            <p>폰·PC 모두. 미리보기 없이 이동하지 않습니다.</p>
+          </div>
+          <hr class="rule" />
+          <div class="use">
+            <div class="pain">
+              <article>
+                <h3>한 폴더에 다 섞임</h3>
+                <p>여행·카톡·캡처·영상이 날짜 없이 한곳에 쌓입니다.</p>
+              </article>
+              <article>
+                <h3>EXIF가 자주 비어 있음</h3>
+                <p>메신저·스크린샷은 촬영일이 없습니다. 파일명·파일일로 추정합니다.</p>
+              </article>
+              <article>
+                <h3>옮기면 되돌리기 어렵다</h3>
+                <p>원본은 이동·삭제하지 않습니다. 복사만 하고, 이번 실행만 취소합니다.</p>
+              </article>
+            </div>
+            <div class="flow">
+              <article class="step">
+                <div class="n">01 고르기</div>
+                <h3>사진·영상 선택</h3>
+                <p>PC는 폴더, 폰은 여러 장. 저장 위치는 원본과 다른 새 폴더입니다.</p>
+              </article>
+              <article class="step">
+                <div class="n">02 미리보기</div>
+                <h3>복사 안 함</h3>
+                <p>예정 장수·중복·필요 용량을 먼저 보여 주고 확인한 뒤에만 시작합니다.</p>
+              </article>
+              <article class="step">
+                <div class="n">03 자동 분류</div>
+                <h3>연월 폴더로 복사</h3>
+                <p>같은 사진은 하나만. 진행 중에는 화면이 꺼지지 않게 Wake Lock을 켭니다.</p>
+              </article>
+              <article class="step">
+                <div class="n">04 받은 뒤</div>
+                <h3>ZIP · 실행 취소</h3>
+                <p>정리본을 ZIP으로 받거나, 방금 복사한 파일만 지웁니다. 원본은 남습니다.</p>
+              </article>
+            </div>
+          </div>
+          <div class="sort-bar">
+            <div class="head">
+              <div class="lab">분류 규칙</div>
+              <b>동일 규칙</b>
+            </div>
+            <div class="ok">
+              <div class="lab">1순위</div>
+              <b>EXIF 촬영일</b>
+            </div>
+            <div class="ok">
+              <div class="lab">2순위</div>
+              <b>파일명 날짜</b>
+            </div>
+            <div class="warn">
+              <div class="lab">3순위</div>
+              <b>파일 수정일</b>
+            </div>
+            <div class="bad">
+              <div class="lab">나머지</div>
+              <b>미분류 · 기타</b>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 -->
+      <section class="slide">
+        <div class="glow glow--warm"></div>
+        <div class="pad">
+          <div class="kicker">
+            <span><b>포토착착</b> · 무엇을 어떻게 만들었나</span>
+            <span class="pg">03 / 04</span>
+          </div>
+          <div class="title-row">
+            <h2>정리는 공짜, 추천은 구독. 코드는 얇게.</h2>
+            <p>UI는 렌더만, 분류·복사는 서비스, 키는 서버에만 둡니다.</p>
+          </div>
+          <hr class="rule" />
+          <div class="split2">
+            <article class="panel panel--free">
+              <div class="price">로그인 없이</div>
+              <h3>폴더 정리</h3>
+              <ul>
+                <li>미리보기 · 자동 분류 · ZIP · 실행 취소</li>
+                <li>중복 해시(큰 파일은 앞·뒤 1MB만)</li>
+                <li>접속일 날씨에 맞춰 화면 톤 변경</li>
+              </ul>
+            </article>
+            <article class="panel">
+              <div class="price">월 2,900원 · 언제든 취소</div>
+              <h3>Gemini 사진 추천</h3>
+              <ul>
+                <li>샘플 인물 3 · 풍경 3 / 베스트 10</li>
+                <li>동의 후에만 축소 JPEG를 Google AI로 전송</li>
+                <li>고른 장을 원하는 폴더로 다시 복사</li>
+              </ul>
+            </article>
+          </div>
+          <div class="arch">
+            <article class="col">
+              <span class="tag">Browser</span>
+              <h3>Vite · React · JSX</h3>
+              <ul>
+                <li>고르기·복사·ZIP은 브라우저에서 끝냅니다.</li>
+                <li>File System Access / OPFS로 저장 폴더를 만듭니다.</li>
+                <li>분류 엔진 <code>sort-engine.js</code></li>
+              </ul>
+            </article>
+            <article class="col api">
+              <span class="tag">API</span>
+              <h3>Node · Vercel</h3>
+              <ul>
+                <li>구글 로그인 → 서명 세션 쿠키</li>
+                <li><code>/api/rank</code> 입력 검증·속도 제한</li>
+                <li>시크릿은 <code>process.env</code>만</li>
+              </ul>
+            </article>
+            <article class="col cli">
+              <span class="tag">Same rule</span>
+              <h3>CLI · 데스크톱</h3>
+              <ul>
+                <li>Node CLI <code>lib/classify.js</code></li>
+                <li>Python <code>photosorting.py</code></li>
+                <li>연월·미분류·기타파일 규칙을 맞춥니다.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="layers">
+            <div>
+              <small>UI</small>
+              <b>src/components</b>
+            </div>
+            <div>
+              <small>상태</small>
+              <b>src/hooks</b>
+            </div>
+            <div>
+              <small>분류·API</small>
+              <b>src/services</b>
+            </div>
+            <div>
+              <small>공용</small>
+              <b>src/utils</b>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 -->
+      <section class="slide">
+        <div class="glow glow--mist"></div>
+        <div class="pad">
+          <div class="kicker">
+            <span><b>포토착착</b> · 지키는 것과 보여주는 것</span>
+            <span class="pg">04 / 04</span>
+          </div>
+          <div class="title-row">
+            <h2>보안을 기능처럼 시연합니다</h2>
+            <p>복사만, 경로 탈출 차단, 키는 환경 변수, 원본은 클라우드에 올리지 않습니다.</p>
+          </div>
+          <hr class="rule" />
+          <div class="end">
+            <div class="sec-list">
+              <article class="sec">
+                <i>01</i>
+                <div>
+                  <h3>원본은 복사만</h3>
+                  <p>이동·삭제·덮어쓰기 없음. 실행 취소는 이번 복사본만.</p>
+                </div>
+              </article>
+              <article class="sec">
+                <i>02</i>
+                <div>
+                  <h3>저장 폴더는 원본과 다름</h3>
+                  <p>같거나 원본 안이면 CLI가 거부합니다. 브라우저도 새 폴더를 만듭니다.</p>
+                </div>
+              </article>
+              <article class="sec">
+                <i>03</i>
+                <div>
+                  <h3>경로 · HTML</h3>
+                  <p>정적 서버는 <code>..</code>을 막고, 모달의 파일명은 이스케이프합니다.</p>
+                </div>
+              </article>
+              <article class="sec">
+                <i>04</i>
+                <div>
+                  <h3>키와 추천 데이터</h3>
+                  <p>Gemini·OAuth 시크릿은 Git에 없습니다. 랭크는 축소본·동의·로그인 뒤에만.</p>
+                </div>
+              </article>
+              <article class="sec">
+                <i>05</i>
+                <div>
+                  <h3>본인 데이터만</h3>
+                  <p>DB는 Firebase만. Firestore를 붙일 때 Security Rules로 본인 문서만 CRUD.</p>
+                </div>
+              </article>
+            </div>
+            <aside class="demo">
+              <h3>시연 4박자</h3>
+              <p class="sub">미리보기부터 베스트 10까지 · 원본은 끝까지 그대로</p>
+              <div class="beat">
+                <span>1</span>
+                <div>
+                  <b>폴더 고르고 미리보기</b>
+                  <p>복사 예정·중복·용량. 아직 디스크에 쓰지 않습니다.</p>
+                </div>
+              </div>
+              <div class="beat">
+                <span>2</span>
+                <div>
+                  <b>자동 분류 시작</b>
+                  <p>2024-03 · 미분류 · 기타파일. 포메 진행 바가 따라갑니다.</p>
+                </div>
+              </div>
+              <div class="beat">
+                <span>3</span>
+                <div>
+                  <b>구글 로그인 → 샘플 3+3</b>
+                  <p>폴더 정리는 이미 끝난 상태. 추천만 로그인이 필요합니다.</p>
+                </div>
+              </div>
+              <div class="beat">
+                <span>4</span>
+                <div>
+                  <b>구독 후 베스트 10</b>
+                  <p>고른 사진을 원하는 폴더로 복사. 원본은 이동하지 않습니다.</p>
+                </div>
+              </div>
+              <div class="close">
+                <img src="img/pome-act-cute.png" alt="" />
+                <p>
+                  정리는 복사, 추천은 동의 후에만.
+                  <small>github.com/Pjujeong-arch/photochakchak</small>
+                </p>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
