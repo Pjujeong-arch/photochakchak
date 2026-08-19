@@ -34,6 +34,7 @@
       }
       .primary { background: var(--accent); color: #fff8f3; }
       .secondary { background: var(--olive); color: #f3faf7; }
+      .ghost { background: #fff8f3; color: var(--ink); border: 1px solid #ead6c8; }
       ol { padding-left: 1.2em; line-height: 1.55; color: #5c4e48; }
       li { margin: 0 0 10px; }
       img.qr { display: block; width: 180px; height: 180px; margin: 18px auto; background: #fff; padding: 8px; border-radius: 12px; }
@@ -42,29 +43,35 @@
   </head>
   <body>
     <h1>포토착착 발표 4장</h1>
-    <p class="lead">갤럭시에서 받아 삼성 노트로 엽니다. 이 페이지는 폰에서 열어 주세요.</p>
-    <a class="btn primary" id="dl" href="photochakchak-devweb-4p.pdf" download="포토착착-개발웹-발표-4장.pdf">1. PDF 다운로드</a>
-    <a class="btn secondary" id="notes" href="#">2. 삼성 노트로 열기</a>
+    <p class="lead">삼성 노트는 PDF를 가져옵니다. 갤럭시에서 아래 버튼을 누르면 저장 후 노트로 넘깁니다.</p>
+    <a class="btn primary" id="notes" href="#">삼성 노트로 열기</a>
+    <a class="btn secondary" id="dl" href="photochakchak-devweb-4p.pdf" download="포토착착-개발웹-발표-4장.pdf">PDF 저장</a>
+    <a class="btn ghost" id="ppt" href="photochakchak-devweb-4p.pptx" download="포토착착-개발웹-발표-4장.pptx">PPTX 저장</a>
     <ol>
-      <li>위 <b>PDF 다운로드</b>를 눌러 저장합니다.</li>
-      <li>알림 또는 <b>내 파일 → 다운로드</b>에서 방금 받은 PDF를 길게 누릅니다.</li>
-      <li><b>다른 앱으로 열기 → 삼성 노트</b>를 고릅니다.</li>
-      <li>노트가 비어 있으면 삼성 노트에서 <b>+ → PDF 가져오기</b>로 같은 파일을 골라도 됩니다.</li>
+      <li><b>삼성 노트로 열기</b>가 앱 선택창을 띄우면 <b>삼성 노트</b>를 고릅니다.</li>
+      <li>안 열리면 <b>PDF 저장</b> 후 <b>내 파일 → 다운로드</b>에서 파일을 길게 누르고 <b>삼성 노트</b>를 고릅니다.</li>
+      <li>삼성 노트 안에서는 <b>+ → PDF 가져오기</b>로 같은 파일을 골라도 됩니다.</li>
     </ol>
-    <p class="note">PC면 아래 QR을 갤럭시 카메라로 찍은 뒤 같은 순서로 여세요.</p>
+    <p class="note">PC면 아래 QR을 갤럭시 카메라로 찍으세요.</p>
     <img class="qr" src="img/samsung-notes-qr.png" alt="PDF 다운로드 QR" />
     <script>
       var pdf =
         "https://raw.githubusercontent.com/Pjujeong-arch/photochakchak/cursor/devweb-pitch-pdf-4p-14d5/docs/devweb-pitch/photochakchak-devweb-4p.pdf";
-      var dl = document.getElementById("dl");
-      var notes = document.getElementById("notes");
-      dl.href = pdf;
-      notes.href =
+      var pptx =
+        "https://raw.githubusercontent.com/Pjujeong-arch/photochakchak/cursor/devweb-pitch-pdf-4p-14d5/docs/devweb-pitch/photochakchak-devweb-4p.pptx";
+      var intent =
         "intent://" +
         pdf.replace(/^https:\/\//, "") +
         "#Intent;scheme=https;action=android.intent.action.VIEW;type=application/pdf;package=com.samsung.android.app.notes;S.browser_fallback_url=" +
         encodeURIComponent(pdf) +
         ";end";
+      document.getElementById("dl").href = pdf;
+      document.getElementById("ppt").href = pptx;
+      document.getElementById("notes").href = intent;
+      var ua = navigator.userAgent || "";
+      if (/Android/i.test(ua)) {
+        window.location.replace(intent);
+      }
     </script>
   </body>
 </html>
